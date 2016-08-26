@@ -21,10 +21,14 @@
 {% if Blog_list %}
     {% for blog in Blog_list %}
         {% if not blog.blog_private or self %}
-                <h3>Title: <a href="{% url 'blog:viewblog' blog.id %}">{{ blog.blog_title }}</a></h3>
-                <h5>Post date: {{ blog.blog_postdate }}</h5>
-                <h4>Blog Content:{{ blog.blog_content }}</h4>
-                <br>
+            <h3>Title: <a href="{% url 'blog:viewblog' blog.id %}">{{ blog.blog_title }}</a></h3>
+            <h5>Post date: {{ blog.blog_postdate }}
+                {% if self %}
+                    ---<a href="{% url 'blog:deleteblog' blog.id %}">Delete</a>
+                {% endif %}
+            </h5>
+            <h4>Blog Content:{{ blog.blog_content }}</h4>
+            <br>
         {% endif %}
     {% endfor %}
 {% else %}

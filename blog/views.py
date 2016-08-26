@@ -69,7 +69,7 @@ def registerresult(request):
         user.set_password(pwd)
         try:
             user.save()
-            request.session['user_id'] = user.id
+            # request.session['user_id'] = user.id
             user = authenticate(username=user_name, password=pwd)
             login(request, user)
         except Exception:
@@ -98,7 +98,7 @@ def personalhomepage(request, home_id):
 
 
 def writeblogpage(request):
-    user_id = request.session['user_id']
+    user_id = request.user.id
     context = {
         'user_id': user_id,
     }
@@ -117,7 +117,6 @@ def writeblog(request):
     try:
         blog.save()
     except Exception:
-        # return render(reverse('blog:writeblog', args=[user_id,]))
         return render(reverse('blog:writeblogpage'))
     else:
         context = {
@@ -126,20 +125,39 @@ def writeblog(request):
         return render(request, 'blog/viewblog.html', context)
 
 
-# def deleteblog(request):
+# delete blog
+def deleteblog(request, b_id):
+    blog = get_object_or_404(Blog, pk=b_id)
+
+    if blog.blog_author_id == request.user.id:
+        user = get_object_or_404(User, pk=blog.blog_author_id)
+        blog_list = Blog.objects.filter(blog_author=blog.blog_author_id)
+        if blog.blog_author_id == request.user.id:
+            self = True
+        else:
+            self = False
+        context = {
+            'User': user,
+            'Blog_list': blog_list,
+            'self': self,
+        }
+        Blog.objects.get(pk=b_id).delete()
+        return render(request, 'blog/personalhomepage.html', context)
+
+    raise Http404
 
 
 def viewblog(request, b_id):
     blog = Blog.objects.get(id=b_id)
-    if not blog.blog_private:
+    if not blog.blog_private or request.user.id == blog.blog_author_id:
         context = {
             'author_id': blog.blog_author_id,
             'blog': blog,
+            'self': blog.blog_author_id == request.user.id
         }
         return render(request, 'blog/viewblog.html', context)
-    elif not request.user.id == request.session['page_id']:
-        raise 404
-        return render(request, 'blog/viewblog.html', context)
+
+    raise Http404
 
 
 # class UserCommand(View):
