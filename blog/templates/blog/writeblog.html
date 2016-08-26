@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Add blog</title>
+</head>
+<body>
+<p>{{ user_id }}</p>
+<form action="{% url 'blog:writeblog' %}" method="post">
+    {% csrf_token %}
+    <p>Blog title: <input type="text" name="title"/></p>
+    <p>Content: <input type="text" name="content"/></p>
+    Private: <input type="radio" name="private" value="True">True</input>
+    <input type="radio" name="private" value="False">False</input> <br>
+    <input type="submit" name="Submit"/>
+</form>
+</body>
+</html>
