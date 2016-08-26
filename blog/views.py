@@ -85,10 +85,10 @@ def registerresult(request):
 def personalhomepage(request, home_id):
     user = get_object_or_404(User, pk=home_id)
     blog_list = Blog.objects.filter(blog_author=home_id)
-    if home_id == request.user.id:
-        self = False
-    else:
+    if home_id == str(request.user.id):
         self = True
+    else:
+        self = False
     context = {
         'User': user,
         'Blog_list': blog_list,
