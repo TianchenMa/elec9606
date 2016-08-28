@@ -21,9 +21,10 @@ class Blog(models.Model):
 
 
 class Comment(models.Model):
-    comment_content = models.TextField(blank=True, null=False)
+    """docstring for Comment"""
     comment_author = models.ForeignKey(User, on_delete=models.CASCADE)
     comment_blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
+    comment_content = models.TextField(blank=True, null=False)
     comment_date = models.DateTimeField("Date commented.", auto_now_add=True)
 
     class Meta:
@@ -36,6 +37,7 @@ class Comment(models.Model):
 
 
 class like(models.Model):
+    """the like model for user like a blog"""
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     blog_id = models.ForeignKey(Blog, on_delete=models.CASCADE)
     like = models.BooleanField(default=False)

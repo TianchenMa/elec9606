@@ -1,17 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>View blog</title>
-</head>
-<body>
+{% extends "./base.html" %}
 
-{% if not request.user.id %}
-    <a href="{% url 'blog:login' %}">Login</a><br>
-    <a href="{% url 'blog:register' %}">Regist</a>
-{% else %}
-    <h6>{{ request.user.username }}<a href="{% url 'blog:logoutpage' %}"> Logout</a></h6>
-{% endif %}
+{% block content %}
 
 {% if error_message %}
     <h4>This blog is private.</h4>
@@ -26,5 +15,25 @@
 {% endif %}
 
 <a href="{% url 'blog:personalhomepage' blog.blog_author_id %}">Back</a>
-</body>
-</html>
+
+{% block commentindex %}
+    <ul>
+    {% for comment in comment_list %}
+        <li>{{ comment.comment_author.username }}</li>
+        <P>{{ comment.comment_content }}</P>
+    {% endfor %}
+    </ul>
+{% endblock %}
+
+{% block comment %}
+    <form action="" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="author_id" value="{{ request.user.id }}"/>
+        <input type="hidden" name="blog_id" value="{{ blog.id }}" />
+        <label>Comment:</label>
+        <input type="text" name="content"/>
+    <input type="submit" name="Submit" />
+    </form>
+{% endblock %}
+
+{% endblock %}

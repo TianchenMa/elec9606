@@ -1,18 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Personal homepage</title>
-</head>
-<body>
-<h1>{{ User.username }}'s Blog</h1><br>
+{% extends "./base.html" %}
 
-{% if not request.user.id %}
-    <a href="{% url 'blog:login' %}">Login</a><br>
-    <a href="{% url 'blog:register' %}">Regist</a>
-{% else %}
-    <h6>{{ request.user.username }}<a href="{% url 'blog:logoutpage' %}"> Logout</a></h6>
-{% endif %}
+{% block content %}
+
+<h1>{{ User.username }}'s Blog</h1><br>
 
 {% if error_message %}
     <p><strong>{{ error_message }}</strong></p>
@@ -34,7 +24,8 @@
 {% else %}
     <p>No blog to show.</p>
 {% endif %}
+
 <a href="{% url 'blog:writeblogpage' %}">Write blog</a>
 <a href="{% url 'blog:index' %}">Index</a>
-</body>
-</html>
+
+{% endblock %}
