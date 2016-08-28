@@ -1,18 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Personal homepage</title>
-</head>
-<body>
-<h1>{{ User.username }}'s Blog</h1><br>
+{% extends "./base.html" %}
 
-{% if not request.user.id %}
-    <a href="{% url 'blog:login' %}">Login</a><br>
-    <a href="{% url 'blog:register' %}">Regist</a>
-{% else %}
-    <h6>{{ request.user.username }}<a href="{% url 'blog:logoutpage' %}"> Logout</a></h6>
-{% endif %}
+{% block content %}
+
+<h1>{{ User.username }}'s Blog</h1><br>
 
 {% if error_message %}
     <p><strong>{{ error_message }}</strong></p>
@@ -21,16 +11,21 @@
 {% if Blog_list %}
     {% for blog in Blog_list %}
         {% if not blog.blog_private or self %}
-                <h3>Title: <a href="{% url 'blog:viewblog' blog.id %}">{{ blog.blog_title }}</a></h3>
-                <h5>Post date: {{ blog.blog_postdate }}</h5>
-                <h4>Blog Content:{{ blog.blog_content }}</h4>
-                <br>
+            <h3>Title: <a href="{% url 'blog:viewblog' blog.id %}">{{ blog.blog_title }}</a></h3>
+            <h5>Post date: {{ blog.blog_postdate }}
+                {% if self %}
+                    ---<a href="{% url 'blog:deleteblog' blog.id %}">Delete</a>
+                {% endif %}
+            </h5>
+            <h4>Blog Content:{{ blog.blog_content }}</h4>
+            <br>
         {% endif %}
     {% endfor %}
 {% else %}
     <p>No blog to show.</p>
 {% endif %}
+
 <a href="{% url 'blog:writeblogpage' %}">Write blog</a>
 <a href="{% url 'blog:index' %}">Index</a>
-</body>
-</html>
+
+{% endblock %}
