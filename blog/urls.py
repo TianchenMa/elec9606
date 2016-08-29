@@ -31,4 +31,6 @@ urlpatterns = [
     url(r'^blog/(?P<b_id>[0-9]+)/deleteblog', views.deleteblog, name='deleteblog'),
 
     url(r'^blog/(?P<b_id>[0-9]+)/commentblog', views.commentblog, name='commentblog'),
+
+    url(r'^blog/(?P<b_id>[0-9]+)/(?P<c_id>[0-9]+)/deletecomment', views.deletecomment, name='deletecomment'),
 ]

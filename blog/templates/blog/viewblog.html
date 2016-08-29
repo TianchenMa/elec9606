@@ -21,7 +21,11 @@
         <h3>Comments:</h3>
         <ul>
             {% for comment in comment_list %}
-                <li>{{ comment.comment_author.username }} - {{ comment.comment_date }}</li>
+                <li>{{ comment.comment_author.username }} - {{ comment.comment_date }} -
+                    {% if self %}
+                        <a href="{% url 'blog:deletecomment' blog.id comment.id %}">Delete</a>
+                    {% endif %}
+                </li>
                 <P>{{ comment.comment_content }}</P>
             {% endfor %}
         </ul>

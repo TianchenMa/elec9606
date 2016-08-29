@@ -197,3 +197,13 @@ def commentblog(request, b_id):
         return render(request, 'blog/viewblog.html', context)
 
 
+def deletecomment(request, b_id, c_id):
+    Comment.objects.get(pk=c_id).delete()
+    blog = Blog.objects.get(pk=b_id)
+    context = {
+        'author_id': blog.blog_author_id,
+        'blog': blog,
+        'self': blog.blog_author_id == request.user.id,
+        'comment_list': blog.comment_set.all()
+    }
+    return render(request, 'blog/viewblog.html', context)
