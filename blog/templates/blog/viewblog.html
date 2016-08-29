@@ -14,6 +14,16 @@
         <p>Content: <br>{{ blog.blog_content }}</p>
     {% endif %}
 
+    {% if request.user %}
+        <a href="{% url 'blog:likeblog' blog.id%}">
+            {% if liked %}
+                Unlike
+            {% else %}
+                Like
+            {% endif %}
+        </a><br>
+    {% endif %}
+
     <a href="{% url 'blog:personalhomepage' blog.blog_author_id %}">Back</a>
 
     {% block commentindex %}
