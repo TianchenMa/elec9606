@@ -3,9 +3,9 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 
-from .models import Blog, Comment
+from .models import Blog, Comment, User
 from .forms import CommentForm
 
 
@@ -101,12 +101,12 @@ def personalhomepage(request, home_id):
 
 
 def writeblogpage(request):
-    user_id = request.user.id
-    context = {
-        'user_id': user_id,
-    }
-    # return render(request, 'blog/writeblog.html', context)
-    return render(request, 'blog/writeblog.html', context)
+    # user_id = request.user.id
+    # context = {
+    #     'user_id': user_id,
+    # }
+    # # return render(request, 'blog/writeblog.html', context)
+    return render(request, 'blog/writeblog.html')
 
 
 def writeblog(request):
@@ -195,3 +195,5 @@ def commentblog(request, b_id):
         context['comment_error'] = 'Login first.'
         context['comment_list'] = blog.comment_set.all()
         return render(request, 'blog/viewblog.html', context)
+
+

@@ -1,8 +1,10 @@
-import datetime
-
 from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
+from django.conf import settings
+from django.contrib.auth.models import User, AbstractUser
+
+
+class User(AbstractUser):
+    follow = models.ManyToManyField(settings.AUTH_USER_MODEL)
 
 
 class Blog(models.Model):
@@ -10,8 +12,13 @@ class Blog(models.Model):
     blog_title = models.CharField(max_length=100)
     blog_content = models.TextField(blank=True, null=True);
     blog_postdate = models.DateTimeField("Date posted")
-    blog_author = models.ForeignKey(User, on_delete=models.CASCADE)
+    blog_author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="blog_author"
+    )
     blog_private = models.BooleanField(default=False)
+    liked_user = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_user")
 
     class Meta:
         ordering = ['blog_postdate']
