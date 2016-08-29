@@ -2,8 +2,8 @@
 
 {% block content %}
 
-{% if user_id %}
-<p>{{ user_id }}</p>
+{% if request.user %}
+<h3>-{{ request.user.username }}- is writing blog</h3>
 <form action="{% url 'blog:writeblog' %}" method="post">
     {% csrf_token %}
     <p>Blog title: <input type="text" name="title"/></p>
