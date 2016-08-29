@@ -58,8 +58,8 @@ def logoutpage(request):
     return render(request, 'blog/index.html', context)
 
 
-def register(requset):
-    return render(requset, 'blog/register.html')
+def register(request):
+    return render(request, 'blog/register.html')
 
 
 def registerresult(request):
@@ -80,7 +80,6 @@ def registerresult(request):
             pass
         else:
             return HttpResponseRedirect(reverse('blog:index'))
-
 
     else:
         return HttpResponseRedirect(reverse('blog:register'))
@@ -154,7 +153,6 @@ def deleteblog(request, b_id):
 def viewblog(request, b_id):
     blog = Blog.objects.get(id=b_id)
     if not blog.blog_private or request.user.id == blog.blog_author_id:
-
         context = {
             'author_id': blog.blog_author_id,
             'blog': blog,
@@ -167,29 +165,33 @@ def viewblog(request, b_id):
 
 
 def commentblog(request, b_id):
-    if request.method == 'POST':
-        blog = Blog.objects.get(pk=b_id)
-        form = CommentForm(request.POST)
+    blog = Blog.objects.get(pk=b_id)
+    context = {
+        'author_id': blog.blog_author_id,
+        'blog': blog,
+        'self': blog.blog_author_id == request.user.id,
+    }
+    if request.user.id:
+        if request.method == 'POST':
+            form = CommentForm(request.POST)
 
-        if form.is_valid():
-            author_id = form.cleaned_data['author_id']
-            blog_id = form.cleaned_data['blog_id']
-            content = form.cleaned_data['content']
-            date = form.cleaned_data['comment_date']
-            comment = Comment(comment_author=author_id, comment_blog=blog_id, comment_content=content,
-                              comment_date=date)
-            try:
-                comment.save()
-            except Exception:
-                raise Http404
+            if form.is_valid():
+                author_id = form.cleaned_data['author_id']
+                content = form.cleaned_data['content']
+                date = timezone.now()
+                comment = Comment(comment_author_id=author_id, comment_blog_id=b_id, comment_content=content,
+                                  comment_date=date)
+                try:
+                    comment.save()
+                except Exception:
+                    raise Http404
+                else:
+                    context['comment_list'] = blog.comment_set.all()
+                    return render(request, 'blog/viewblog.html', context)
+
             else:
-                context = {
-                    'author_id': blog.blog_author_id,
-                    'blog': blog,
-                    'self': blog.blog_author_id == request.user.id
-                }
-                return render(request, 'blog/viewblog.html', context)
-
-        else:
-            raise Http404
-
+                raise Http404
+    else:
+        context['comment_error'] = 'Login first.'
+        context['comment_list'] = blog.comment_set.all()
+        return render(request, 'blog/viewblog.html', context)
