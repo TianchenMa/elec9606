@@ -8,8 +8,8 @@
     {% csrf_token %}
     <p>Blog title: <input type="text" name="title"/></p>
     <p>Content: <input type="text" name="content"/></p>
-    Private: <input type="radio" name="private" value="True">True</input>
-    <input type="radio" name="private" value="False">False</input> <br>
+    Private: <input type="radio" name="private" value=1>True</input>
+    <input type="radio" name="private" value=0>False</input><br>
     <input type="submit" name="Submit"/>
 </form>
 {% else %}
