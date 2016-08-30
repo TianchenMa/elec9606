@@ -21,7 +21,7 @@ class Blog(models.Model):
     liked_user = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_user")
 
     class Meta:
-        ordering = ['blog_postdate']
+        ordering = ['-blog_postdate']
 
     def __str__(self):
         return "Title: " + self.blog_title + "; Author: " + User.objects.get(pk=self.blog_author_id).__str__()
@@ -42,9 +42,3 @@ class Comment(models.Model):
             pk=self.comment_author_id).user_name + "; " + "Comment on blog: " + Blog.objects.get(
             pk=self.comment_blog_id).blog_title + "."
 
-
-class like(models.Model):
-    """the like model for user like a blog"""
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    blog_id = models.ForeignKey(Blog, on_delete=models.CASCADE)
-    like = models.BooleanField(default=False)

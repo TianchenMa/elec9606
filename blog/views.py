@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 # from django.contrib.auth.models import User
 
 from .models import Blog, Comment, User
-from .forms import CommentForm
+from .forms import CommentForm, BlogForm
 
 
 # Create your views here.
@@ -24,10 +24,6 @@ def personalinformation(request, user_id):
         'User': user,
     }
     return render(request, 'blog/personalinformation.html', context)
-
-
-# def loginpage(request):
-#     return render(request, 'blog/login.html')
 
 
 def userlogin(request):
@@ -74,7 +70,6 @@ def registerresult(request):
         user.set_password(pwd)
         try:
             user.save()
-            # request.session['user_id'] = user.id
             user = authenticate(username=user_name, password=pwd)
             login(request, user)
         except Exception:
@@ -102,36 +97,36 @@ def personalhomepage(request, home_id):
 
 
 def writeblogpage(request):
-    # user_id = request.user.id
-    # context = {
-    #     'user_id': user_id,
-    # }
-    # # return render(request, 'blog/writeblog.html', context)
     return render(request, 'blog/writeblog.html')
 
 
 def writeblog(request):
     if request.method == 'POST':
-        title = request.POST['title']
-        content = request.POST['content']
-        prvt = request.POST['private']
-        pdate = timezone.now()
-        author = request.user.id
-        blog = Blog.objects.create(blog_title=title, blog_content=content, blog_postdate=pdate,
-                                   blog_author_id=author, blog_private=prvt)
-        try:
-            blog.save()
-        except Exception:
-            return render(reverse('blog:writeblogpage'))
+        form = BlogForm(request.POST)
+
+        if form.is_valid():
+            title = form.cleaned_data['title']
+            content = form.cleaned_data['content']
+            private = form.cleaned_data['private']
+            post_date = timezone.now()
+            author = request.user.id
+            blog = Blog.objects.create(blog_title=title, blog_content=content, blog_postdate=post_date,
+                                       blog_author_id=author, blog_private=private)
+            try:
+                blog.save()
+            except Exception:
+                return render(reverse('blog:writeblogpage'))
+            else:
+                context = {
+                    'blog': blog,
+                }
+                return render(request, 'blog/viewblog.html', context)  # delete blog
+
         else:
-            context = {
-                'blog': blog,
-            }
-            return render(request, 'blog/viewblog.html', context)  # delete blog
+            raise Http404
 
     else:
         raise Http404
-
 
 
 def deleteblog(request, b_id):
@@ -173,13 +168,14 @@ def viewblog(request, b_id):
 
 
 def likeblog(request, b_id):
-    user = User.objects.get(pk=request.user.id)
-    blog = Blog.objects.get(pk=b_id)
-    if user.id != blog.blog_author_id:
-        if blog.liked_user.filter(pk=user.id).exists():
-            blog.liked_user.remove(user)
-        else:
-            blog.liked_user.add(user)
+    if request.method == 'POST':
+        user = User.objects.get(pk=request.user.id)
+        blog = Blog.objects.get(pk=b_id)
+        if user.id != blog.blog_author_id:
+            if blog.liked_user.filter(pk=user.id).exists():
+                blog.liked_user.remove(user)
+            else:
+                blog.liked_user.add(user)
 
     context = {
         'blog': blog,
@@ -187,6 +183,7 @@ def likeblog(request, b_id):
         'comment_list': blog.comment_set.all(),
         'liked': blog.liked_user.filter(pk=user.id).exists(),
     }
+
     return render(request, 'blog/viewblog.html', context)
 
 
