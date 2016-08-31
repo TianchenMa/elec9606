@@ -16,9 +16,9 @@ urlpatterns = [
 
     url(r'^registerresult', views.registerresult, name='registerresult'),
 
-    # url(r'^(?P<command>\w+)$', ),
-
     url(r'^(?P<home_id>[0-9]+)/homepage/', views.personalhomepage, name='personalhomepage'),
+
+    url(r'^(?P<u_id>[0-9]+)/follow/', views.followuser, name='followuser'),
 
     url(r'^information/', views.personalinformation, name='personalinformation'),
 
