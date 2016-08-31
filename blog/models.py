@@ -6,6 +6,9 @@ from django.contrib.auth.models import User, AbstractUser
 class User(AbstractUser):
     follow = models.ManyToManyField(settings.AUTH_USER_MODEL)
 
+    class Meta:
+        ordering = ['date_joined']
+
 
 class Blog(models.Model):
     """docstring for Blog"""

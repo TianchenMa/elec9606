@@ -8,21 +8,16 @@
 <div id="login-part">
     {% block login %}
 
-        {% if error_message %}
-            <p>{{ error_message }}</p>
-        {% endif %}
-
-        <form action="{% url 'blog:login' %}" method="post">
-            {% csrf_token %}
-            User name: <input type="text" name="name">
-            Password: <input type="password" name="password">
-            <input type="submit" value="Login">
-        </form>
-
         {% if not request.user.id %}
+            <form action="{% url 'blog:login' %}" method="post">
+                {% csrf_token %}
+                User name: <input type="text" name="name">
+                Password: <input type="password" name="password">
+                <input type="submit" value="Login">
+            </form>
             <a href="{% url 'blog:register' %}">Regist</a>
         {% else %}
-            <h6>{{ request.user.username }}<a href="{% url 'blog:logoutpage' %}"> Logout</a></h6>
+            <h3>{{ request.user.username }}<a href="{% url 'blog:logoutpage' %}"> Logout</a></h3>
         {% endif %}
 
     {% endblock %}

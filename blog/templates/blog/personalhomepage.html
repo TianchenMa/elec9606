@@ -2,30 +2,41 @@
 
 {% block content %}
 
-<h1>{{ User.username }}'s Blog</h1><br>
-
-{% if error_message %}
-    <p><strong>{{ error_message }}</strong></p>
-{% endif %}
-
-{% if Blog_list %}
-    {% for blog in Blog_list %}
-        {% if not blog.blog_private or self %}
-            <h3>Title: <a href="{% url 'blog:viewblog' blog.id %}">{{ blog.blog_title }}</a></h3>
-            <h5>Post date: {{ blog.blog_postdate }}
-                {% if self %}
-                    ---<a href="{% url 'blog:deleteblog' blog.id %}">Delete</a>
-                {% endif %}
-            </h5>
-            <h4>Blog Content:{{ blog.blog_content }}</h4>
-            <br>
+    <h1>{{ User.username }}'s Blog</h1>
+    {% if not self %}
+        <form action="{% url 'blog:followuser' User.id %}" method="post">
+        {% csrf_token %}
+        {% if not follow %}
+            <button type="submit">Follow</button>
+        {% else %}
+            <button type="submit">Unfollow</button>
         {% endif %}
-    {% endfor %}
-{% else %}
-    <p>No blog to show.</p>
-{% endif %}
+        </form>
+    {% endif %}
 
-<a href="{% url 'blog:writeblogpage' %}">Write blog</a>
-<a href="{% url 'blog:index' %}">Index</a>
+
+    {% if error_message %}
+        <p><strong>{{ error_message }}</strong></p>
+    {% endif %}
+
+    {% if Blog_list %}
+        {% for blog in Blog_list %}
+            {% if not blog.blog_private or self %}
+                <h3>Title: <a href="{% url 'blog:viewblog' blog.id %}">{{ blog.blog_title }}</a></h3>
+                <h5>Post date: {{ blog.blog_postdate }}
+                    {% if self %}
+                        ---<a href="{% url 'blog:deleteblog' blog.id %}">Delete</a>
+                    {% endif %}
+                </h5>
+                <h4>Blog Content:{{ blog.blog_content }}</h4>
+                <br>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <p>No blog to show.</p>
+    {% endif %}
+
+    <a href="{% url 'blog:writeblogpage' %}">Write blog</a>
+    <a href="{% url 'blog:index' %}">Index</a>
 
 {% endblock %}

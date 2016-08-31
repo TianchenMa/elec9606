@@ -11,18 +11,29 @@ from .forms import CommentForm, BlogForm
 
 # Create your views here.
 def index(request):
-    user_list = User.objects.order_by('date_joined')
     context = {
-        'user_list': user_list,
+        'user_list': User.objects.all(),
     }
+    if request.user.is_active:
+        blog = Blog.objects.none()
+        user = User.objects.get(pk=request.user.id)
+        context['follow_list'] = user.follow.all()
+        for user in user.follow.all():
+            blog = blog | Blog.objects.filter(blog_author_id=user.id, blog_private=False)
+
+        context['blog_list'] = blog
+
     return render(request, 'blog/index.html', context)
 
 
 def personalinformation(request, user_id):
     user = get_object_or_404(User, pk=user_id)
-    context = {
-        'User': user,
-    }
+
+    if request.user.is_active:
+        context = {
+            'User': user,
+        }
+
     return render(request, 'blog/personalinformation.html', context)
 
 
@@ -40,6 +51,7 @@ def userlogin(request):
             log_message = 'Fail to login.'
     else:
         log_message = 'Please login.'
+
     context = {
         'log_message': log_message
     }
@@ -52,6 +64,7 @@ def logoutpage(request):
     context = {
         'user_list': user_list,
     }
+
     return render(request, 'blog/index.html', context)
 
 
@@ -81,17 +94,47 @@ def registerresult(request):
         return HttpResponseRedirect(reverse('blog:register'))
 
 
-def personalhomepage(request, home_id):
-    user = get_object_or_404(User, pk=home_id)
-    blog_list = Blog.objects.filter(blog_author=home_id)
-    if home_id == str(request.user.id):
+def followuser(request, u_id):
+    luser = User.objects.get(pk=request.user.id)
+
+    if request.method == 'POST':
+        if request.user.is_active:
+            follow = User.objects.get(pk=u_id)
+
+            if luser.follow.filter(pk=u_id).exists():
+                luser.follow.remove(follow)
+            else:
+                luser.follow.add(follow)
+
+    user = User.objects.get(pk=u_id)
+    if u_id == str(request.user.id):
         self = True
     else:
         self = False
     context = {
         'User': user,
+        'Blog_list': Blog.objects.filter(blog_author_id=u_id),
+        'self': self,
+        'follow': user in request.user.follow.all()
+    }
+    return render(request, 'blog/personalhomepage.html', context)
+
+
+def personalhomepage(request, home_id):
+    user = get_object_or_404(User, pk=home_id)
+    luser = User.objects.get(pk=request.user.id)
+    blog_list = Blog.objects.filter(blog_author=home_id)
+
+    if home_id == str(luser.id):
+        self = True
+    else:
+        self = False
+
+    context = {
+        'User': user,
         'Blog_list': blog_list,
         'self': self,
+        'follow': user in luser.follow.all()
     }
     return render(request, 'blog/personalhomepage.html', context)
 
