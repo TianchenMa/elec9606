@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q
-# from django.contrib.auth.models import User
+from django.core.mail import send_mail
 
 from .models import Blog, Comment, User
 from .forms import CommentForm, BlogForm, ForwardForm
@@ -38,7 +38,6 @@ def personalinformation(request, user_id):
 
 
 def userlogin(request):
-    log_message = None
     if request.method == 'POST':
         name = request.POST['name']
         pwd = request.POST['password']
@@ -92,6 +91,9 @@ def registerresult(request):
 
     else:
         return HttpResponseRedirect(reverse('blog:register'))
+
+
+# def resetpassword(request, u_id):
 
 
 def followuser(request, u_id):
@@ -227,7 +229,7 @@ def forwardblog(request, b_id):
                 blog_title=fwdcontent,
                 blog_postdate=fwddate,
                 blog_private=fwdprivate,
-                fwd_blog= blog
+                fwd_blog=blog
             )
             fwdblog.save()
 
@@ -242,9 +244,9 @@ def forwardblog(request, b_id):
 
 
 def likeblog(request, b_id):
+    blog = Blog.objects.get(pk=b_id)
+    user = User.objects.get(pk=request.user.id)
     if request.method == 'POST':
-        user = User.objects.get(pk=request.user.id)
-        blog = Blog.objects.get(pk=b_id)
         if user.id != blog.blog_author_id:
             if blog.liked_user.filter(pk=user.id).exists():
                 blog.liked_user.remove(user)
@@ -259,6 +261,22 @@ def likeblog(request, b_id):
     }
 
     return render(request, 'blog/viewblog.html', context)
+
+
+def searchblog(request):
+    blog = Blog.objects.none()
+    user = User.objects.none()
+    if request.method == 'POST':
+        keyword = request.POST['keyword']
+        blog = Blog.objects.filter(blog_title__contains=keyword, blog_private=False)
+        user = User.objects.filter(username__contains=keyword)
+
+    context = {
+            'result_blog': blog,
+            'result_user': user,
+        }
+
+    return render(request, 'blog/searchresult.html', context)
 
 
 def commentblog(request, b_id):
@@ -297,14 +315,16 @@ def commentblog(request, b_id):
 
 def deletecomment(request, b_id, c_id):
     user = request.user
+    blog = Blog.objects.get(pk=b_id)
+
     if request.method == 'POST':
         Comment.objects.get(pk=c_id).delete()
-        blog = Blog.objects.get(pk=b_id)
-        context = {
-            'author_id': blog.blog_author_id,
-            'blog': blog,
-            'self': blog.blog_author_id == user.id,
-            'comment_list': blog.comment_set.all()
-        }
+
+    context = {
+        'author_id': blog.blog_author_id,
+        'blog': blog,
+        'self': blog.blog_author_id == user.id,
+        'comment_list': blog.comment_set.all()
+    }
 
     return render(request, 'blog/viewblog.html', context)

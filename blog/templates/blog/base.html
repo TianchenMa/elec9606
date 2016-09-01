@@ -23,14 +23,21 @@
     {% endblock %}
 </div>
 
+<div id="search">
+    <form action="{% url 'blog:searchblog' %}" method="post">
+        {% csrf_token %}
+        Search: <input type="text" name="keyword" />
+        <button type="submit">Search</button>
+    </form>
+</div>
+
 <div id="main-part">
     {% block content %}
     {% endblock %}
 </div>
 
 <div id="bottom-part">
-    {% block bottom %}
-    {% endblock %}
+    <a href="{% url 'blog:index' %}">Index</a>
 </div>
 
 </body>
