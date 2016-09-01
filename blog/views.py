@@ -3,10 +3,11 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
+from django.db.models import Q
 # from django.contrib.auth.models import User
 
 from .models import Blog, Comment, User
-from .forms import CommentForm, BlogForm
+from .forms import CommentForm, BlogForm, ForwardForm
 
 
 # Create your views here.
@@ -19,8 +20,7 @@ def index(request):
         user = User.objects.get(pk=request.user.id)
         context['follow_list'] = user.follow.all()
         for user in user.follow.all():
-            blog = blog | Blog.objects.filter(blog_author_id=user.id, blog_private=False)
-
+            blog = blog | Blog.objects.filter(blog_author=user, blog_private=False)
         context['blog_list'] = blog
 
     return render(request, 'blog/index.html', context)
@@ -122,10 +122,10 @@ def followuser(request, u_id):
 
 def personalhomepage(request, home_id):
     user = get_object_or_404(User, pk=home_id)
-    luser = User.objects.get(pk=request.user.id)
-    blog_list = Blog.objects.filter(blog_author=home_id)
+    log_user = User.objects.get(pk=request.user.id)
+    blog_list = Blog.objects.filter(blog_author=user)
 
-    if home_id == str(luser.id):
+    if home_id == str(log_user.id):
         self = True
     else:
         self = False
@@ -134,7 +134,7 @@ def personalhomepage(request, home_id):
         'User': user,
         'Blog_list': blog_list,
         'self': self,
-        'follow': user in luser.follow.all()
+        'follow': user in log_user.follow.all()
     }
     return render(request, 'blog/personalhomepage.html', context)
 
@@ -196,9 +196,10 @@ def deleteblog(request, b_id):
 
 
 def viewblog(request, b_id):
-    blog = Blog.objects.get(id=b_id)
-    user = request.user
-    if not blog.blog_private or user == blog.blog_author_id:
+    blog = get_object_or_404(Blog, pk=b_id)
+    if not blog.blog_private or blog.blog_author_id == request.user.id:
+        user = request.user
+
         context = {
             'blog': blog,
             'self': blog.blog_author_id == user.id,
@@ -208,6 +209,36 @@ def viewblog(request, b_id):
         return render(request, 'blog/viewblog.html', context)
 
     raise Http404
+
+
+def forwardblog(request, b_id):
+    user = User.objects.get(pk=request.user.id)
+    blog = Blog.objects.get(pk=b_id)
+
+    if request.method == 'POST':
+        form = ForwardForm(request.POST)
+
+        if form.is_valid():
+            fwdcontent = form.cleaned_data['fwdcontent']
+            fwdprivate = form.cleaned_data['fwdprivate']
+            fwddate = timezone.now()
+            fwdblog = Blog(
+                blog_author=user,
+                blog_title=fwdcontent,
+                blog_postdate=fwddate,
+                blog_private=fwdprivate,
+                fwd_blog= blog
+            )
+            fwdblog.save()
+
+    context = {
+        'blog': Blog.objects.get(pk=b_id),
+        'self': blog.blog_author_id == user.id,
+        'comment_list': blog.comment_set.all(),
+        'liked': blog.liked_user.filter(pk=user.id).exists(),
+    }
+
+    return render(request, 'blog/viewblog.html', context)
 
 
 def likeblog(request, b_id):

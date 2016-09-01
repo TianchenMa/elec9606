@@ -2,21 +2,35 @@
 
 {% block content %}
 
-    {% if error_message %}
-        <h4>This blog is private.</h4>
-    {% else %}
-        <h2>{{ blog.blog_title }}</h2>
-        {% if self %}
-            <form action="{% url 'blog:deleteblog' blog.id %}" method="post">
-                {% csrf_token %}
-                ---
-                <button type="submit">Delete</button>
-            </form>
-        {% endif %}
+    <h2>{{ blog.blog_title }}</h2>
+
+    {% if self %}
+        <form action="{% url 'blog:deleteblog' blog.id %}" method="post">
+            {% csrf_token %}
+            ---
+            <button type="submit">Delete</button>
+        </form>
+    {% endif %}
+    {% if not blog.fwd_blog %}
         <label>Author: {{ blog.blog_author.username }}</label><br>
         <label>Publish date: {{ blog.blog_postdate }}</label>
         <p>Content: <br>{{ blog.blog_content }}</p>
+    {% else %}
+        <label>Forward comment: {{ blog.blog_title }}</label><br>
+        <label>Forward date: {{ blog.blog_postdate }}</label><br>
+        <label>Author: {{ blog.fwd_blog.blog_author.username }}</label><br>
+        <label>Publish date: {{ blog.fwd_blog.blog_postdate }}</label>
+        <p>Content: <br>{{ blog.fwd_blog.blog_content }}</p>
     {% endif %}
+
+    <form action="{% url 'blog:forwardblog' blog.id %}" method="post">
+        {% csrf_token %}
+        Forward message: <input type="text" name="fwdcontent"/>
+        Private: <input type="radio" name="fwdprivate" value=1>True</input>
+        <input type="radio" name="fwdprivate" value=0>False</input><br>
+        <button type="submit">Forward</button>
+    </form>
+    <br>
 
     {% if request.user %}
         <form action="{% url 'blog:likeblog' blog.id %}" method="post">
@@ -29,6 +43,7 @@
                 {% endif %}
             </button>
         </form>
+        <br>
     {% endif %}
 
     <a href="{% url 'blog:personalhomepage' blog.blog_author_id %}">Back</a>
