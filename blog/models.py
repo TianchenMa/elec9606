@@ -13,15 +13,24 @@ class User(AbstractUser):
 class Blog(models.Model):
     """docstring for Blog"""
     blog_title = models.CharField(max_length=100)
-    blog_content = models.TextField(blank=True, null=True);
+    blog_content = models.TextField(blank=True, null=True)
     blog_postdate = models.DateTimeField("Date posted")
+    blog_private = models.BooleanField(default=False)
+    liked_user = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name="liked_user"
+    )
     blog_author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="blog_author"
     )
-    blog_private = models.BooleanField(default=False)
-    liked_user = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_user")
+    fwd_blog = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        related_name="forward_blog",
+        null=True
+    )
 
     class Meta:
         ordering = ['-blog_postdate']

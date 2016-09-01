@@ -7,6 +7,11 @@ class BlogForm(forms.Form):
     private = forms.CharField()
 
 
+class ForwardForm(forms.Form):
+    fwdcontent = forms.CharField(max_length=100)
+    fwdprivate = forms.CharField()
+
+
 class CommentForm(forms.Form):
     author_id = forms.CharField()
     content = forms.CharField(widget=forms.Textarea)
