@@ -22,6 +22,8 @@ urlpatterns = [
 
     url(r'^information/', views.personalinformation, name='personalinformation'),
 
+    url(r'^search/', views.searchblog, name='searchblog'),
+
     url(r'^writeblog/', views.writeblogpage, name='writeblogpage'),
 
     url(r'^writeblog', views.writeblog, name='writeblog'),
