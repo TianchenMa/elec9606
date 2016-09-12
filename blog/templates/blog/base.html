@@ -6,18 +6,23 @@
 </head>
 <body>
 <div id="login-part">
+
     {% block login %}
 
         {% if not request.user.id %}
-            <form action="{% url 'blog:login' %}" method="post">
+            <form action="{% url 'blog:user' 'login' %}" method="post">
                 {% csrf_token %}
                 User name: <input type="text" name="name">
                 Password: <input type="password" name="password">
                 <input type="submit" value="Login">
             </form>
-            <a href="{% url 'blog:register' %}">Regist</a>
+            <a href="{% url 'blog:user' 'register' %}">Regist</a>
         {% else %}
-            <h3>{{ request.user.username }}<a href="{% url 'blog:logoutpage' %}"> Logout</a></h3>
+            <img src="{{ log_user.profile_photo }}"/>{{ log_user.username }}
+            <form action="{% url 'blog:user' 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
         {% endif %}
 
     {% endblock %}
@@ -26,7 +31,7 @@
 <div id="search">
     <form action="{% url 'blog:searchblog' %}" method="post">
         {% csrf_token %}
-        Search: <input type="text" name="keyword" />
+        Search: <input type="text" name="keyword"/>
         <button type="submit">Search</button>
     </form>
 </div>
