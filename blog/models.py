@@ -3,8 +3,27 @@ from django.conf import settings
 from django.contrib.auth.models import User, AbstractUser
 
 
+GENDER = {
+    0: u'Male',
+    1: u'Female'
+}
+
+
+DEFAULT_PROFILE_PHOTO = '/static/blog/profile/default.jpg'
+
+
+def user_directory_path(instance, filename):
+    return '/static/blog/profile/user_{0}_{1}'.format(instance.user.id, filename)
+
+
+def music_directory_path():
+    return '/static/blog/music'
+
+
 class User(AbstractUser):
+    gender = models.IntegerField(default=0, choices=GENDER.items())
     follow = models.ManyToManyField(settings.AUTH_USER_MODEL)
+    profile_photo = models.ImageField(upload_to=user_directory_path, default=DEFAULT_PROFILE_PHOTO)
 
     class Meta:
         ordering = ['date_joined']
@@ -37,6 +56,10 @@ class Blog(models.Model):
 
     def __str__(self):
         return "Title: " + self.blog_title + "; Author: " + User.objects.get(pk=self.blog_author_id).__str__()
+
+
+class Music(models.Model):
+    music_content = models.FileField(upload_to=music_directory_path)
 
 
 class Comment(models.Model):
