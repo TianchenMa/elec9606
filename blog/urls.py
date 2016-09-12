@@ -1,12 +1,16 @@
+from django.conf import settings
 from django.conf.urls import url
-
+from django.conf.urls.static import static
 from . import views
+from .views import IndexView, UserControl
 
 app_name = 'blog'
 urlpatterns = [
-    url(r'^index/', views.index, name='index'),
+    # url(r'^index/', views.index, name='index'),
 
-    # url(r'^login/', views.loginpage, name='login'),
+    url(r'index', IndexView.as_view(), name='index'),
+
+    url(r'^user/(?P<slug>\w+)$', UserControl.as_view(), name='user'),
 
     url(r'^login', views.userlogin, name='login'),
 
@@ -40,3 +44,4 @@ urlpatterns = [
 
     url(r'^blog/(?P<b_id>[0-9]+)/(?P<c_id>[0-9]+)/deletecomment', views.deletecomment, name='deletecomment'),
 ]
+              # + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

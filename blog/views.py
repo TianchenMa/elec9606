@@ -3,14 +3,17 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
-from django.db.models import Q
-from django.core.mail import send_mail
+from django.views.generic import View, ListView, CreateView, DeleteView, DetailView
+from django.views.generic.detail import SingleObjectMixin
+from django.core.exceptions import PermissionDenied
 
 from .models import Blog, Comment, User
-from .forms import CommentForm, BlogForm, ForwardForm
+from .forms import CommentForm, BlogForm, ForwardForm, LoginForm
+from django.views.generic import ListView
 
 
 # Create your views here.
+
 def index(request):
     context = {
         'user_list': User.objects.all(),
@@ -24,6 +27,109 @@ def index(request):
         context['blog_list'] = blog
 
     return render(request, 'blog/index.html', context)
+
+
+class BaseMixin(object):
+    def get_context_data(self, *args, **kwargs):
+        context = super(BaseMixin, self).get_context_data(**kwargs)
+        if self.request.user:
+            user = User.objects.get(pk=self.request.user.id)
+            context['log_user'] = user
+        else:
+            context['log_user'] = None
+
+        return context
+
+
+class IndexView(ListView):
+    template_name = 'blog/index.html'
+    paginate_by = 10
+
+    def get_context_data(self, **kwargs):
+        context = super(ListView, self).get_context_data(**kwargs)
+        blog = Blog.objects.none()
+
+        if self.request.user.is_active:
+            user = User.objects.get(pk=self.request.user.id)
+            context['log_user'] = user
+            context['follow_list'] = user.follow.all()
+
+            for user in user.follow.all():
+                blog = blog | Blog.objects.filter(blog_author=user, blog_private=False)
+
+        context['blog_list'] = blog
+        return context
+
+    def get_queryset(self):
+        return User.objects.all()
+
+
+class UserControl(View):
+    def get(self, request, *args, **kwargs):
+        slug = self.kwargs.get('slug')
+        if slug == 'register':
+            return render(request, 'blog/register.html')
+
+        raise PermissionDenied
+
+    def post(self, request, *args, **kwargs):
+        slug = self.kwargs.get('slug')
+
+        if slug == 'login':
+            return self.login(request)
+        elif slug == 'logout':
+            return self.logout(request)
+        elif slug == 'register':
+            return self.register(request)
+        elif slug == 'registerpage':
+            return self.registerpage(request)
+        elif slug == 'follow':
+            return
+
+        raise PermissionDenied
+
+    def login(self, request):
+        name = self.request.POST['name']
+        pwd = self.request.POST['password']
+        user = authenticate(username=name, password=pwd)
+
+        if user is not None:
+            self.request.session.set_expiry(0)
+            login(self.request, user)
+            log_message = 'Login successfully.'
+        else:
+            log_message = 'Fail to login.'
+
+        return HttpResponseRedirect(reverse('blog:index'))
+
+    def logout(self, request):
+        logout(request)
+        user_list = User.objects.order_by('date_joined')
+        context = {
+            'user_list': user_list,
+        }
+
+        return render(self.request, 'blog/index.html', context)
+
+    def registerpage(self, request):
+        return render(request, 'blog/register.html')
+
+    def register(self, request):
+        user_name = self.request.POST['username']
+        firstname = self.request.POST['firstname']
+        lastname = self.request.POST['lastname']
+        pwd = self.request.POST['password']
+        e_mail = self.request.POST['email']
+        user = User.objects.create(username=user_name, first_name=firstname, last_name=lastname, email=e_mail)
+        user.set_password(pwd)
+        try:
+            user.save()
+            user = authenticate(username=user_name, password=pwd)
+            login(self.request, user)
+        except Exception:
+            pass
+        else:
+            return HttpResponseRedirect(reverse('blog:index'))
 
 
 def personalinformation(request, user_id):
