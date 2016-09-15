@@ -10,19 +10,20 @@
     {% block login %}
 
         {% if not request.user.id %}
-            <form action="{% url 'blog:user' 'login' %}" method="post">
+            <form action="{% url 'blog:usercontrol' 'login' %}" method="post">
                 {% csrf_token %}
                 User name: <input type="text" name="name">
                 Password: <input type="password" name="password">
                 <input type="submit" value="Login">
             </form>
-            <a href="{% url 'blog:user' 'register' %}">Regist</a>
+            <a href="{% url 'blog:usercontrol' 'register' %}">Regist</a>
         {% else %}
             <img src="{{ log_user.profile_photo }}"/>{{ log_user.username }}
-            <form action="{% url 'blog:user' 'logout' %}" method="post">
+            <form action="{% url 'blog:usercontrol' 'logout' %}" method="post">
                 {% csrf_token %}
                 <button type="submit">Logout</button>
             </form>
+{#            <a href="{% url %}">Write blog</a>#}
         {% endif %}
 
     {% endblock %}

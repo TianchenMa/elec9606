@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.views.generic import View, ListView, CreateView, DeleteView, DetailView
+from django.views.generic.edit import ContextMixin
 from django.views.generic.detail import SingleObjectMixin
 from django.core.exceptions import PermissionDenied
 
@@ -13,26 +14,10 @@ from django.views.generic import ListView
 
 
 # Create your views here.
-
-def index(request):
-    context = {
-        'user_list': User.objects.all(),
-    }
-    if request.user.is_active:
-        blog = Blog.objects.none()
-        user = User.objects.get(pk=request.user.id)
-        context['follow_list'] = user.follow.all()
-        for user in user.follow.all():
-            blog = blog | Blog.objects.filter(blog_author=user, blog_private=False)
-        context['blog_list'] = blog
-
-    return render(request, 'blog/index.html', context)
-
-
-class BaseMixin(object):
+class BaseMixin(ContextMixin):
     def get_context_data(self, *args, **kwargs):
         context = super(BaseMixin, self).get_context_data(**kwargs)
-        if self.request.user:
+        if self.request.user.is_active:
             user = User.objects.get(pk=self.request.user.id)
             context['log_user'] = user
         else:
@@ -41,17 +26,16 @@ class BaseMixin(object):
         return context
 
 
-class IndexView(ListView):
+class IndexView(BaseMixin, ListView):
     template_name = 'blog/index.html'
     paginate_by = 10
 
     def get_context_data(self, **kwargs):
-        context = super(ListView, self).get_context_data(**kwargs)
+        context = super(IndexView, self).get_context_data(**kwargs)
         blog = Blog.objects.none()
 
         if self.request.user.is_active:
-            user = User.objects.get(pk=self.request.user.id)
-            context['log_user'] = user
+            user = context['log_user']
             context['follow_list'] = user.follow.all()
 
             for user in user.follow.all():
@@ -64,7 +48,7 @@ class IndexView(ListView):
         return User.objects.all()
 
 
-class UserControl(View):
+class UserControl(View, BaseMixin):
     def get(self, request, *args, **kwargs):
         slug = self.kwargs.get('slug')
         if slug == 'register':
@@ -83,8 +67,6 @@ class UserControl(View):
             return self.register(request)
         elif slug == 'registerpage':
             return self.registerpage(request)
-        elif slug == 'follow':
-            return
 
         raise PermissionDenied
 
@@ -132,6 +114,70 @@ class UserControl(View):
             return HttpResponseRedirect(reverse('blog:index'))
 
 
+class UserView(BaseMixin, View):
+    def get(self, request, *args, **kwargs):
+        slug = self.kwargs.get('slug')
+
+        if slug == 'homepage':
+            return self.homepage(request)
+
+    def post(self, request, *args, **kwargs):
+        slug = self.kwargs.get('slug')
+
+        if slug == 'follow':
+            return self.follow(request)
+
+    def homepage(self, request):
+        context = super(UserView, self).get_context_data(self.kwargs)
+        home_id = self.kwargs.get('u_id')
+        user = get_object_or_404(User, pk=home_id)
+        log_user = context['log_user']
+
+        if not type(log_user) is User or not home_id == log_user.id:
+            is_self = False
+            blog_list = Blog.objects.filter(blog_author=user, blog_private=False)
+        else:
+            home_id == str(log_user.id)
+            is_self = True
+            blog_list = Blog.objects.filter(blog_author=user)
+
+        context['User'] = user
+        context['Blog_list'] = blog_list
+        context['self'] = is_self
+
+        return render(self.request, 'blog/personalhomepage.html', context)
+
+    def follow(self, request):
+        context = super(UserView, self).get_context_data(self.kwargs)
+        log_user = context['log_user']
+        home_id = self.kwargs.get('u_id')
+
+        if type(log_user) is User:
+            follow = User.objects.get(pk=home_id)
+
+            if log_user.follow.filter(pk=home_id).exists():
+                log_user.follow.remove(follow)
+            else:
+                log_user.follow.add(follow)
+
+        user = User.objects.get(pk=home_id)
+
+        if not type(log_user) is User or not home_id == log_user.id:
+            is_self = False
+            blog_list = Blog.objects.filter(blog_author=user, blog_private=False)
+        else:
+            home_id == str(log_user.id)
+            is_self = True
+            blog_list = Blog.objects.filter(blog_author=user)
+
+        context['User'] = user
+        context['Blog_list'] = blog_list
+        context['self'] = is_self
+        context['follow'] = user in log_user.follow.all()
+
+        return render(self.request, 'blog/personalhomepage.html', context)
+
+
 def personalinformation(request, user_id):
     user = get_object_or_404(User, pk=user_id)
 
@@ -141,65 +187,6 @@ def personalinformation(request, user_id):
         }
 
     return render(request, 'blog/personalinformation.html', context)
-
-
-def userlogin(request):
-    if request.method == 'POST':
-        name = request.POST['name']
-        pwd = request.POST['password']
-        user = authenticate(username=name, password=pwd)
-        if user is not None:
-            request.session.set_expiry(0)
-            login(request, user)
-            log_message = 'Login successfully.'
-        else:
-            log_message = 'Fail to login.'
-    else:
-        log_message = 'Please login.'
-
-    context = {
-        'log_message': log_message
-    }
-    return HttpResponseRedirect(reverse('blog:index'), context)
-
-
-def logoutpage(request):
-    logout(request)
-    user_list = User.objects.order_by('date_joined')
-    context = {
-        'user_list': user_list,
-    }
-
-    return render(request, 'blog/index.html', context)
-
-
-def register(request):
-    return render(request, 'blog/register.html')
-
-
-def registerresult(request):
-    if request.method == 'POST':
-        user_name = request.POST['username']
-        firstname = request.POST['firstname']
-        lastname = request.POST['lastname']
-        pwd = request.POST['password']
-        e_mail = request.POST['email']
-        user = User.objects.create(username=user_name, first_name=firstname, last_name=lastname, email=e_mail)
-        user.set_password(pwd)
-        try:
-            user.save()
-            user = authenticate(username=user_name, password=pwd)
-            login(request, user)
-        except Exception:
-            pass
-        else:
-            return HttpResponseRedirect(reverse('blog:index'))
-
-    else:
-        return HttpResponseRedirect(reverse('blog:register'))
-
-
-# def resetpassword(request, u_id):
 
 
 def followuser(request, u_id):
@@ -378,9 +365,9 @@ def searchblog(request):
         user = User.objects.filter(username__contains=keyword)
 
     context = {
-            'result_blog': blog,
-            'result_user': user,
-        }
+        'result_blog': blog,
+        'result_user': user,
+    }
 
     return render(request, 'blog/searchresult.html', context)
 

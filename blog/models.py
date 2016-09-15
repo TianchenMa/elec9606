@@ -59,7 +59,10 @@ class Blog(models.Model):
 
 
 class Music(models.Model):
-    music_content = models.FileField(upload_to=music_directory_path)
+    singer = models.CharField(max_length=50)
+    song_name = models.CharField(max_length=100)
+    music = models.FileField(upload_to=music_directory_path)
+    music_blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
 
 
 class Comment(models.Model):
