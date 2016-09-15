@@ -10,17 +10,11 @@ urlpatterns = [
 
     url(r'index', IndexView.as_view(), name='index'),
 
-    url(r'^user/(?P<slug>\w+)$', UserControl.as_view(), name='user'),
+    url(r'^user/(?P<slug>\w+)$', UserControl.as_view(), name='usercontrol'),
 
-    url(r'^login', views.userlogin, name='login'),
+    url(r'^(?P<u_id>[0-9]+)/(?P<slug>\w+)$', views.UserView.as_view(), name='user'),
 
-    url(r'^logout/', views.logoutpage, name='logoutpage'),
-
-    url(r'^register/', views.register, name='register'),
-
-    url(r'^registerresult', views.registerresult, name='registerresult'),
-
-    url(r'^(?P<home_id>[0-9]+)/homepage/', views.personalhomepage, name='personalhomepage'),
+    url(r'^(?P<u_id>[0-9]+)/homepage/', views.personalhomepage, name='personalhomepage'),
 
     url(r'^(?P<u_id>[0-9]+)/follow/', views.followuser, name='followuser'),
 

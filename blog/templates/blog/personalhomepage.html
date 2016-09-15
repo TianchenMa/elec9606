@@ -4,7 +4,7 @@
 
     <h1>{{ User.username }}'s Blog</h1>
     {% if not self %}
-        <form action="{% url 'blog:followuser' User.id %}" method="post">
+        <form action="{% url 'blog:user' User.id 'follow' %}" method="post">
             {% csrf_token %}
             {% if not follow %}
                 <button type="submit">Follow</button>
@@ -21,13 +21,12 @@
 
     {% if Blog_list %}
         <ul>
-        {% for blog in Blog_list %}
-            {% if not blog.blog_private or self %}
+            {% for blog in Blog_list %}
                 {% if blog.fwd_blog %}
                     <li>Forward: {{ blog.blog_title }} <br> Forward date: {{ blog.blog_postdate }}</li>
                     <h3>Title: <a href="{% url 'blog:viewblog' blog.fwd_blog.id %}">
                         {{ blog.fwd_blog.blog_title }}</a></h3>
-                    <label href="{% url 'blog:personalhomepage' blog.fwd_blog.blog_author_id%}">
+                    <label href="{% url 'blog:personalhomepage' blog.fwd_blog.blog_author_id %}">
                         Author: {{ blog.fwd_blog.blog_author.username }}</label>
                     <h5>Post date: {{ blog.fwd_blog.blog_postdate }}
                         {% if self %}
@@ -47,10 +46,8 @@
                     </h5>
                     <h4>Blog Content:{{ blog.blog_content }}</h4>
                     <br>
-
                 {% endif %}
-            {% endif %}
-        {% endfor %}
+            {% endfor %}
         </ul>
     {% else %}
         <p>No blog to show.</p>
