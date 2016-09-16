@@ -23,7 +23,7 @@
                 {% csrf_token %}
                 <button type="submit">Logout</button>
             </form>
-{#            <a href="{% url %}">Write blog</a>#}
+            <a href="{% url 'blog:writeblog' %}">Write blog</a>
         {% endif %}
 
     {% endblock %}

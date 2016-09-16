@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls import url
 from django.conf.urls.static import static
 from . import views
-from .views import IndexView, UserControl
+from .views import IndexView, UserControl, WriteBlogView
 
 app_name = 'blog'
 urlpatterns = [
@@ -14,17 +14,13 @@ urlpatterns = [
 
     url(r'^(?P<u_id>[0-9]+)/(?P<slug>\w+)$', views.UserView.as_view(), name='user'),
 
-    url(r'^(?P<u_id>[0-9]+)/homepage/', views.personalhomepage, name='personalhomepage'),
-
-    url(r'^(?P<u_id>[0-9]+)/follow/', views.followuser, name='followuser'),
-
-    url(r'^information/', views.personalinformation, name='personalinformation'),
+    url(r'^blog/write', WriteBlogView.as_view(), name='writeblog'),
 
     url(r'^search/', views.searchblog, name='searchblog'),
 
     url(r'^writeblog/', views.writeblogpage, name='writeblogpage'),
 
-    url(r'^writeblog', views.writeblog, name='writeblog'),
+    # url(r'^writeblog', views.writeblog, name='writeblog'),
 
     url(r'^blog/(?P<b_id>[0-9]+)/viewblog/', views.viewblog, name='viewblog'),
 
@@ -38,4 +34,3 @@ urlpatterns = [
 
     url(r'^blog/(?P<b_id>[0-9]+)/(?P<c_id>[0-9]+)/deletecomment', views.deletecomment, name='deletecomment'),
 ]
-              # + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

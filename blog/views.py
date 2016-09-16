@@ -127,29 +127,43 @@ class UserView(BaseMixin, View):
         if slug == 'follow':
             return self.follow(request)
 
-    def homepage(self, request):
-        context = super(UserView, self).get_context_data(self.kwargs)
+    def get_context_data(self, **kwargs):
+        context = super(UserView, self).get_context_data(**kwargs)
+        log_user = context['log_user']
         home_id = self.kwargs.get('u_id')
         user = get_object_or_404(User, pk=home_id)
-        log_user = context['log_user']
+        blog_list = Blog.objects.filter(blog_author=user)
 
-        if not type(log_user) is User or not home_id == log_user.id:
-            is_self = False
-            blog_list = Blog.objects.filter(blog_author=user, blog_private=False)
+        if type(log_user) is User:
+            context['follow'] = user in log_user.follow.all()
+
+            if home_id == str(log_user.id):
+                is_self = True
+            else:
+                is_self = False
+                blog_list = blog_list.filter(blog_private=False)
+
         else:
-            home_id == str(log_user.id)
-            is_self = True
-            blog_list = Blog.objects.filter(blog_author=user)
+            is_self = False
+            context['follow'] = False
+            blog_list = blog_list.filter(blog_private=False)
 
         context['User'] = user
         context['Blog_list'] = blog_list
         context['self'] = is_self
 
+        return context
+
+    def homepage(self, request):
+        context = self.get_context_data()
+
         return render(self.request, 'blog/personalhomepage.html', context)
 
     def follow(self, request):
-        context = super(UserView, self).get_context_data(self.kwargs)
+        # context = super(UserView, self).get_context_data(self.kwargs)
+        context = self.get_context_data()
         log_user = context['log_user']
+        user = context['User']
         home_id = self.kwargs.get('u_id')
 
         if type(log_user) is User:
@@ -159,88 +173,27 @@ class UserView(BaseMixin, View):
                 log_user.follow.remove(follow)
             else:
                 log_user.follow.add(follow)
-
-        user = User.objects.get(pk=home_id)
-
-        if not type(log_user) is User or not home_id == log_user.id:
-            is_self = False
-            blog_list = Blog.objects.filter(blog_author=user, blog_private=False)
+            context['follow'] = user in log_user.follow.all()
         else:
-            home_id == str(log_user.id)
-            is_self = True
-            blog_list = Blog.objects.filter(blog_author=user)
-
-        context['User'] = user
-        context['Blog_list'] = blog_list
-        context['self'] = is_self
-        context['follow'] = user in log_user.follow.all()
+            context['follow'] = False
 
         return render(self.request, 'blog/personalhomepage.html', context)
 
 
-def personalinformation(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
+class WriteBlogView(BaseMixin, CreateView):
+    model = Blog
+    fields = [
+        'title',
+        'content',
+        'private',
+    ]
 
-    if request.user.is_active:
-        context = {
-            'User': user,
-        }
+    def get(self, request, *args, **kwargs):
+        form = BlogForm()
+        return render(request, 'blog/blog_form.html', {'form': form})
 
-    return render(request, 'blog/personalinformation.html', context)
-
-
-def followuser(request, u_id):
-    luser = User.objects.get(pk=request.user.id)
-
-    if request.method == 'POST':
-        if request.user.is_active:
-            follow = User.objects.get(pk=u_id)
-
-            if luser.follow.filter(pk=u_id).exists():
-                luser.follow.remove(follow)
-            else:
-                luser.follow.add(follow)
-
-    user = User.objects.get(pk=u_id)
-    if u_id == str(request.user.id):
-        self = True
-    else:
-        self = False
-    context = {
-        'User': user,
-        'Blog_list': Blog.objects.filter(blog_author_id=u_id),
-        'self': self,
-        'follow': user in request.user.follow.all()
-    }
-    return render(request, 'blog/personalhomepage.html', context)
-
-
-def personalhomepage(request, home_id):
-    user = get_object_or_404(User, pk=home_id)
-    log_user = User.objects.get(pk=request.user.id)
-    blog_list = Blog.objects.filter(blog_author=user)
-
-    if home_id == str(log_user.id):
-        self = True
-    else:
-        self = False
-
-    context = {
-        'User': user,
-        'Blog_list': blog_list,
-        'self': self,
-        'follow': user in log_user.follow.all()
-    }
-    return render(request, 'blog/personalhomepage.html', context)
-
-
-def writeblogpage(request):
-    return render(request, 'blog/writeblog.html')
-
-
-def writeblog(request):
-    if request.method == 'POST':
-        form = BlogForm(request.POST)
+    def post(self, request, *args, **kwargs):
+        form = BlogForm(self.request.POST)
 
         if form.is_valid():
             title = form.cleaned_data['title']
@@ -258,13 +211,20 @@ def writeblog(request):
                 context = {
                     'blog': blog,
                 }
-                return render(request, 'blog/viewblog.html', context)  # delete blog
-
+                return render(request, 'blog/viewblog.html', context)
         else:
             raise Http404
 
-    else:
-        raise Http404
+
+def personalinformation(request, user_id):
+    user = get_object_or_404(User, pk=user_id)
+
+    if request.user.is_active:
+        context = {
+            'User': user,
+        }
+
+    return render(request, 'blog/personalinformation.html', context)
 
 
 def deleteblog(request, b_id):

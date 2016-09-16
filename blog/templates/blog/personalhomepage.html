@@ -26,8 +26,8 @@
                     <li>Forward: {{ blog.blog_title }} <br> Forward date: {{ blog.blog_postdate }}</li>
                     <h3>Title: <a href="{% url 'blog:viewblog' blog.fwd_blog.id %}">
                         {{ blog.fwd_blog.blog_title }}</a></h3>
-                    <label href="{% url 'blog:personalhomepage' blog.fwd_blog.blog_author_id %}">
-                        Author: {{ blog.fwd_blog.blog_author.username }}</label>
+                    Author: <a href="{% url 'blog:user' blog.fwd_blog.blog_author_id 'homepage' %}">
+                        {{ blog.fwd_blog.blog_author.username }}</a>
                     <h5>Post date: {{ blog.fwd_blog.blog_postdate }}
                         {% if self %}
                             ---<a href="{% url 'blog:deleteblog' blog.id %}">Delete</a>

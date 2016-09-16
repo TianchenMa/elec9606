@@ -46,7 +46,7 @@
         <br>
     {% endif %}
 
-    <a href="{% url 'blog:personalhomepage' blog.blog_author_id %}">Back</a>
+    <a href="{% url 'blog:user' blog.blog_author_id 'homepage' %}">Back</a>
 
     {% block commentindex %}
 
