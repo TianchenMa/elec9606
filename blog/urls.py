@@ -16,13 +16,11 @@ urlpatterns = [
 
     url(r'^blog/write', WriteBlogView.as_view(), name='writeblog'),
 
+    url(r'^blog/(?P<b_id>[0-9]+)/(?P<slug>\w+)$', views.BlogView.as_view(), name='blog'),
+
     url(r'^search/', views.searchblog, name='searchblog'),
 
-    url(r'^writeblog/', views.writeblogpage, name='writeblogpage'),
-
-    # url(r'^writeblog', views.writeblog, name='writeblog'),
-
-    url(r'^blog/(?P<b_id>[0-9]+)/viewblog/', views.viewblog, name='viewblog'),
+    # url(r'^blog/(?P<b_id>[0-9]+)/viewblog/', views.viewblog, name='viewblog'),
 
     url(r'^blog/(?P<b_id>[0-9]+)/forward/', views.forwardblog, name='forwardblog'),
 

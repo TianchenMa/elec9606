@@ -160,7 +160,6 @@ class UserView(BaseMixin, View):
         return render(self.request, 'blog/personalhomepage.html', context)
 
     def follow(self, request):
-        # context = super(UserView, self).get_context_data(self.kwargs)
         context = self.get_context_data()
         log_user = context['log_user']
         user = context['User']
@@ -216,15 +215,56 @@ class WriteBlogView(BaseMixin, CreateView):
             raise Http404
 
 
-def personalinformation(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
+class BlogView(BaseMixin, View):
 
-    if request.user.is_active:
-        context = {
-            'User': user,
-        }
+    def get(self, request, *args, **kwargs):
+        slug = self.kwargs.get('slug')
+        if slug == 'view':
+            return self.view(request)
 
-    return render(request, 'blog/personalinformation.html', context)
+    def post(self, request, *args, **kwargs):
+        slug = self.kwargs.get('slug')
+
+        if slug == 'delete':
+            return
+        elif slug == 'forward':
+            return
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(BlogView, self).get_context_data(**kwargs)
+        log_user = context['log_user']
+        b_id = self.kwargs.get('b_id')
+        blog = Blog.objects.get(pk=b_id)
+        home_id = blog.blog_author_id
+        user = get_object_or_404(User, pk=home_id)
+
+        if type(log_user) is User:
+
+            if home_id == str(log_user.id):
+                is_self = True
+            else:
+                is_self = False
+
+            context['liked'] = blog.liked_user.filter(pk=log_user.id).exists()
+        else:
+            is_self = False
+            context['liked'] = False
+
+        context['blog'] = blog
+        context['User'] = user
+        context['self'] = is_self
+
+        return context
+
+    def view(self, request):
+        context = self.get_context_data()
+        blog = context['blog']
+        context['comment_list'] = blog.comment_set.all()
+
+        return render(self.request, 'blog/viewblog.html', context)
+
+    # def delete(self, request):
+
 
 
 def deleteblog(request, b_id):

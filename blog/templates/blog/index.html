@@ -29,7 +29,7 @@
     {% if blog_list %}
         <ul>
             {% for blog in blog_list %}
-                <li>Title: <a href="{% url 'blog:viewblog' blog.id %}">{{ blog.blog_title }}</a></li>
+                <li>Title: <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.blog_title }}</a></li>
                 <label>Post date: {{ blog.blog_postdate }}</label>
                 <p>Blog Content: {{ blog.blog_content }}</p>
                 <br>
