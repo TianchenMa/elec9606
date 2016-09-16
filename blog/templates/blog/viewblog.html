@@ -23,7 +23,7 @@
         <p>Content: <br>{{ blog.fwd_blog.blog_content }}</p>
     {% endif %}
 
-    <form action="{% url 'blog:forwardblog' blog.id %}" method="post">
+    <form action="{% url 'blog:blog' blog.id 'forward' %}" method="post">
         {% csrf_token %}
         Forward message: <input type="text" name="fwdcontent"/>
         Private: <input type="radio" name="fwdprivate" value=1>True</input>
@@ -33,7 +33,7 @@
     <br>
 
     {% if request.user %}
-        <form action="{% url 'blog:likeblog' blog.id %}" method="post">
+        <form action="{% url 'blog:blog' blog.id 'like' %}" method="post">
             <button type="submit">
                 {% csrf_token %}
                 {% if liked %}

@@ -227,8 +227,10 @@ class BlogView(BaseMixin, View):
 
         if slug == 'delete':
             return
+        elif slug == 'like':
+            return self.like(request)
         elif slug == 'forward':
-            return
+            return self.forward(request)
 
     def get_context_data(self, *args, **kwargs):
         context = super(BlogView, self).get_context_data(**kwargs)
@@ -253,17 +255,54 @@ class BlogView(BaseMixin, View):
         context['blog'] = blog
         context['User'] = user
         context['self'] = is_self
+        context['comment_list'] = blog.comment_set.all()
 
         return context
 
     def view(self, request):
         context = self.get_context_data()
-        blog = context['blog']
-        context['comment_list'] = blog.comment_set.all()
 
         return render(self.request, 'blog/viewblog.html', context)
 
-    # def delete(self, request):
+    def forward(self, request):
+        context = self.get_context_data()
+        blog = context['blog']
+        log_user = context['log_user']
+
+        form = ForwardForm(self.request.POST)
+
+        if form.is_valid():
+            fwdcontent = form.cleaned_data['fwdcontent']
+            fwdprivate = form.cleaned_data['fwdprivate']
+            fwddate = timezone.now()
+            fwdblog = Blog(
+                blog_author=log_user,
+                blog_title=fwdcontent,
+                blog_postdate=fwddate,
+                blog_private=fwdprivate,
+                fwd_blog=blog
+            )
+            fwdblog.save()
+
+        return render(self.request, 'blog/viewblog.html', context)
+
+    def like(self, request):
+        context = self.get_context_data()
+        blog = context['blog']
+        log_user = context['log_user']
+        id = log_user.id
+        if id != blog.blog_author_id:
+            if blog.liked_user.filter(pk=id).exists():
+                blog.liked_user.remove(log_user)
+                context['liked'] = False
+            else:
+                blog.liked_user.add(log_user)
+                context['liked'] = True
+
+        return render(self.request, 'blog/viewblog.html', context)
+
+
+
 
 
 
@@ -288,52 +327,6 @@ def deleteblog(request, b_id):
             return render(request, 'blog/personalhomepage.html', context)
 
     raise Http404
-
-
-def viewblog(request, b_id):
-    blog = get_object_or_404(Blog, pk=b_id)
-    if not blog.blog_private or blog.blog_author_id == request.user.id:
-        user = request.user
-
-        context = {
-            'blog': blog,
-            'self': blog.blog_author_id == user.id,
-            'comment_list': blog.comment_set.all(),
-            'liked': blog.liked_user.filter(pk=user.id).exists(),
-        }
-        return render(request, 'blog/viewblog.html', context)
-
-    raise Http404
-
-
-def forwardblog(request, b_id):
-    user = User.objects.get(pk=request.user.id)
-    blog = Blog.objects.get(pk=b_id)
-
-    if request.method == 'POST':
-        form = ForwardForm(request.POST)
-
-        if form.is_valid():
-            fwdcontent = form.cleaned_data['fwdcontent']
-            fwdprivate = form.cleaned_data['fwdprivate']
-            fwddate = timezone.now()
-            fwdblog = Blog(
-                blog_author=user,
-                blog_title=fwdcontent,
-                blog_postdate=fwddate,
-                blog_private=fwdprivate,
-                fwd_blog=blog
-            )
-            fwdblog.save()
-
-    context = {
-        'blog': Blog.objects.get(pk=b_id),
-        'self': blog.blog_author_id == user.id,
-        'comment_list': blog.comment_set.all(),
-        'liked': blog.liked_user.filter(pk=user.id).exists(),
-    }
-
-    return render(request, 'blog/viewblog.html', context)
 
 
 def likeblog(request, b_id):
