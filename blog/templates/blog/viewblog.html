@@ -5,7 +5,7 @@
     <h2>{{ blog.blog_title }}</h2>
 
     {% if self %}
-        <form action="{% url 'blog:deleteblog' blog.id %}" method="post">
+        <form action="{% url 'blog:blog' blog.id 'delete' %}" method="post">
             {% csrf_token %}
             ---
             <button type="submit">Delete</button>

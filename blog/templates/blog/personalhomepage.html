@@ -27,23 +27,29 @@
                     <h3>Title: <a href="{% url 'blog:blog' blog.fwd_blog.id 'view' %}">
                         {{ blog.fwd_blog.blog_title }}</a></h3>
                     Author: <a href="{% url 'blog:user' blog.fwd_blog.blog_author_id 'homepage' %}">
-                        {{ blog.fwd_blog.blog_author.username }}</a>
-                    <h5>Post date: {{ blog.fwd_blog.blog_postdate }}
+                    {{ blog.fwd_blog.blog_author.username }}</a>
+                    <p>Post date: {{ blog.fwd_blog.blog_postdate }}
                         {% if self %}
-                            ---<a href="{% url 'blog:deleteblog' blog.id %}">Delete</a>
+                            <form action="{% url 'blog:blog' blog.id 'delete' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit">Delete</button>
+                            </form>
                         {% endif %}
-                    </h5>
+                    </p>
                     <h4>Blog Content:{{ blog.fwd_blog.blog_content }}</h4>
                     <br>
 
                 {% else %}
 
                     <li>Title: <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.blog_title }}</a></li>
-                    <h5>Post date: {{ blog.blog_postdate }}
+                    <p>Post date: {{ blog.blog_postdate }}
                         {% if self %}
-                            ---<a href="{% url 'blog:deleteblog' blog.id %}">Delete</a>
+                            <form action="{% url 'blog:blog' blog.id 'delete' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit">Delete</button>
+                            </form>
                         {% endif %}
-                    </h5>
+                    </p>
                     <h4>Blog Content:{{ blog.blog_content }}</h4>
                     <br>
                 {% endif %}

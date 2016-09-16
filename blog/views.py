@@ -226,7 +226,7 @@ class BlogView(BaseMixin, View):
         slug = self.kwargs.get('slug')
 
         if slug == 'delete':
-            return
+            return self.deleteblog(request)
         elif slug == 'like':
             return self.like(request)
         elif slug == 'forward':
@@ -301,32 +301,17 @@ class BlogView(BaseMixin, View):
 
         return render(self.request, 'blog/viewblog.html', context)
 
+    def deleteblog(self, rquest):
+        context = self.get_context_data()
+        blog = context['blog']
+        log_user = context['log_user']
+        if blog.blog_author_id == log_user.id:
+            Blog.objects.get(pk=blog.id).delete()
+            context['blog'] = None
+            context['follow'] = False
+            context['Blog_list'] = Blog.objects.filter(blog_author=log_user)
 
-
-
-
-
-def deleteblog(request, b_id):
-    if request.method == 'POST':
-        blog = get_object_or_404(Blog, pk=b_id)
-        if blog.blog_author_id == request.user.id:
-            user = get_object_or_404(User, pk=blog.blog_author_id)
-            blog_list = Blog.objects.filter(blog_author=blog.blog_author_id)
-            if blog.blog_author_id == request.user.id:
-                self = True
-            else:
-                self = False
-
-            context = {
-                'User': user,
-                'Blog_list': blog_list,
-                'self': self,
-            }
-            Blog.objects.get(pk=b_id).delete()
-
-            return render(request, 'blog/personalhomepage.html', context)
-
-    raise Http404
+        return render(self.request, 'blog/personalhomepage.html', context)
 
 
 def likeblog(request, b_id):
