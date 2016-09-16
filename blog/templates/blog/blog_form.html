@@ -6,11 +6,7 @@
 <h3>-{{ request.user.username }}- is writing blog</h3>
 <form action="{% url 'blog:writeblog' %}" method="post">
     {% csrf_token %}
-    <p>Blog title: <input type="text" name="title"/></p>
-    <p>Content: <input type="text" name="content"/></p>
-    <p>Music<input type="file" name="music"/></p>
-    Private: <input type="radio" name="private" value=1>True</input>
-    <input type="radio" name="private" value=0>False</input><br>
+    {{ form.as_p }}
     <input type="submit" name="Submit"/>
 </form>
 {% else %}

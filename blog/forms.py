@@ -1,6 +1,12 @@
 from django import forms
 
 
+IS_PRIVATE = [
+    (True, True),
+    (False, False)
+]
+
+
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=150)
     password = forms.PasswordInput()
@@ -9,7 +15,7 @@ class LoginForm(forms.Form):
 class BlogForm(forms.Form):
     title = forms.CharField(max_length=100)
     content = forms.CharField(widget=forms.Textarea)
-    private = forms.CharField()
+    private = forms.ChoiceField(choices=IS_PRIVATE)
 
 
 class ForwardForm(forms.Form):
