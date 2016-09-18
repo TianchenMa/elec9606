@@ -5,7 +5,7 @@
     <h2>{{ blog.blog_title }}</h2>
 
     {% if self %}
-        <form action="{% url 'blog:deleteblog' blog.id %}" method="post">
+        <form action="{% url 'blog:blog' blog.id 'delete' %}" method="post">
             {% csrf_token %}
             ---
             <button type="submit">Delete</button>
@@ -18,12 +18,12 @@
     {% else %}
         <label>Forward comment: {{ blog.blog_title }}</label><br>
         <label>Forward date: {{ blog.blog_postdate }}</label><br>
-        <label>Author: {{ blog.fwd_blog.blog_author.username }}</label><br>
+        <label>{{ blog.fwd_blog.blog_author.username }}</label><br>
         <label>Publish date: {{ blog.fwd_blog.blog_postdate }}</label>
         <p>Content: <br>{{ blog.fwd_blog.blog_content }}</p>
     {% endif %}
 
-    <form action="{% url 'blog:forwardblog' blog.id %}" method="post">
+    <form action="{% url 'blog:blog' blog.id 'forward' %}" method="post">
         {% csrf_token %}
         Forward message: <input type="text" name="fwdcontent"/>
         Private: <input type="radio" name="fwdprivate" value=1>True</input>
@@ -33,7 +33,7 @@
     <br>
 
     {% if request.user %}
-        <form action="{% url 'blog:likeblog' blog.id %}" method="post">
+        <form action="{% url 'blog:blog' blog.id 'like' %}" method="post">
             <button type="submit">
                 {% csrf_token %}
                 {% if liked %}
@@ -48,6 +48,21 @@
 
     <a href="{% url 'blog:user' blog.blog_author_id 'homepage' %}">Back</a>
 
+    {% block comment %}
+
+        {% if comment_error %}
+            <h3>{{ comment_error }}</h3>
+        {% endif %}
+        <form action="{% url 'blog:blog' blog.id 'comment' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="author_id" value="{{ request.user.id }}"/>
+            <label>Comment:</label>
+            <input type="text" name="content"/>
+            <input type="submit" name="Submit"/>
+        </form>
+
+    {% endblock %}
+
     {% block commentindex %}
 
         <h3>Comments:</h3>
@@ -55,7 +70,7 @@
             {% for comment in comment_list %}
                 <li>{{ comment.comment_author.username }} - {{ comment.comment_date }} -
                     {% if self %}
-                        <form action="{% url 'blog:deketecomment' blog.id comment.id %}" method="post">
+                        <form action="{% url 'blog:comment' comment.id %}" method="post">
                             {% csrf_token %}
                             <button type="submit">Delete</button>
                         </form>
@@ -64,19 +79,6 @@
                 <P>{{ comment.comment_content }}</P>
             {% endfor %}
         </ul>
-    {% endblock %}
-
-    {% block comment %}
-        {% if comment_error %}
-            <h3>{{ comment_error }}</h3>
-        {% endif %}
-        <form action="{% url 'blog:commentblog' blog.id %}" method="post">
-            {% csrf_token %}
-            <input type="hidden" name="author_id" value="{{ request.user.id }}"/>
-            <label>Comment:</label>
-            <input type="text" name="content"/>
-            <input type="submit" name="Submit"/>
-        </form>
     {% endblock %}
 
 {% endblock %}

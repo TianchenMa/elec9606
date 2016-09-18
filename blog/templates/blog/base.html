@@ -30,7 +30,7 @@
 </div>
 
 <div id="search">
-    <form action="{% url 'blog:searchblog' %}" method="post">
+    <form action="{% url 'blog:usercontrol' 'search' %}" method="post">
         {% csrf_token %}
         Search: <input type="text" name="keyword"/>
         <button type="submit">Search</button>

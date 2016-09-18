@@ -1,8 +1,10 @@
 from django.shortcuts import render, get_object_or_404, render_to_response, Http404
 from django.http import HttpResponseRedirect, HttpResponse
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
+from django.views.generic import TemplateView
 from django.views.generic import View, ListView, CreateView, DeleteView, DetailView
 from django.views.generic.edit import ContextMixin
 from django.views.generic.detail import SingleObjectMixin
@@ -67,6 +69,8 @@ class UserControl(View, BaseMixin):
             return self.register(request)
         elif slug == 'registerpage':
             return self.registerpage(request)
+        elif slug == 'search':
+            return self.search(request)
 
         raise PermissionDenied
 
@@ -112,6 +116,20 @@ class UserControl(View, BaseMixin):
             pass
         else:
             return HttpResponseRedirect(reverse('blog:index'))
+
+    def search(self, request):
+        context = self.get_context_data()
+        blog = Blog.objects.none()
+        user = User.objects.none()
+        if request.method == 'POST':
+            keyword = request.POST['keyword']
+            blog = Blog.objects.filter(blog_title__contains=keyword, blog_private=False)
+            user = User.objects.filter(username__contains=keyword)
+
+        context['result_blog'] = blog
+        context['result_user'] = user
+
+        return render(self.request, 'blog/searchresult.html', context)
 
 
 class UserView(BaseMixin, View):
@@ -160,7 +178,6 @@ class UserView(BaseMixin, View):
         return render(self.request, 'blog/personalhomepage.html', context)
 
     def follow(self, request):
-        # context = super(UserView, self).get_context_data(self.kwargs)
         context = self.get_context_data()
         log_user = context['log_user']
         user = context['User']
@@ -206,79 +223,80 @@ class WriteBlogView(BaseMixin, CreateView):
             try:
                 blog.save()
             except Exception:
-                return render(reverse('blog:writeblogpage'))
+                return render(reverse('blog:weiteblog'))
             else:
                 context = {
                     'blog': blog,
                 }
                 return render(request, 'blog/viewblog.html', context)
         else:
-            raise Http404
+            raise render(reverse('blog:writeblog'))
 
 
-def personalinformation(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
+class BlogView(BaseMixin, View):
 
-    if request.user.is_active:
-        context = {
-            'User': user,
-        }
+    def get(self, request, *args, **kwargs):
+        slug = self.kwargs.get('slug')
+        if slug == 'view':
+            return self.view(request)
 
-    return render(request, 'blog/personalinformation.html', context)
+    def post(self, request, *args, **kwargs):
+        slug = self.kwargs.get('slug')
 
+        if slug == 'delete':
+            return self.deleteblog(request)
+        elif slug == 'like':
+            return self.like(request)
+        elif slug == 'forward':
+            return self.forward(request)
+        elif slug == 'comment':
+            return self.comment(request)
 
-def deleteblog(request, b_id):
-    if request.method == 'POST':
-        blog = get_object_or_404(Blog, pk=b_id)
-        if blog.blog_author_id == request.user.id:
-            user = get_object_or_404(User, pk=blog.blog_author_id)
-            blog_list = Blog.objects.filter(blog_author=blog.blog_author_id)
-            if blog.blog_author_id == request.user.id:
-                self = True
+    def get_context_data(self, *args, **kwargs):
+        context = super(BlogView, self).get_context_data(**kwargs)
+        log_user = context['log_user']
+        b_id = self.kwargs.get('b_id')
+        blog = Blog.objects.get(pk=b_id)
+        home_id = blog.blog_author_id
+        user = get_object_or_404(User, pk=home_id)
+
+        if type(log_user) is User:
+
+            if home_id == log_user.id:
+                is_self = True
             else:
-                self = False
+                is_self = False
 
-            context = {
-                'User': user,
-                'Blog_list': blog_list,
-                'self': self,
-            }
-            Blog.objects.get(pk=b_id).delete()
+            context['liked'] = blog.liked_user.filter(pk=log_user.id).exists()
+        else:
+            is_self = False
+            context['liked'] = False
 
-            return render(request, 'blog/personalhomepage.html', context)
+        context['blog'] = blog
+        context['User'] = user
+        context['self'] = is_self
+        context['comment_list'] = blog.comment_set.all()
 
-    raise Http404
+        return context
 
+    def view(self, request):
+        context = self.get_context_data()
 
-def viewblog(request, b_id):
-    blog = get_object_or_404(Blog, pk=b_id)
-    if not blog.blog_private or blog.blog_author_id == request.user.id:
-        user = request.user
+        return render(self.request, 'blog/viewblog.html', context)
 
-        context = {
-            'blog': blog,
-            'self': blog.blog_author_id == user.id,
-            'comment_list': blog.comment_set.all(),
-            'liked': blog.liked_user.filter(pk=user.id).exists(),
-        }
-        return render(request, 'blog/viewblog.html', context)
+    def forward(self, request):
+        context = self.get_context_data()
+        blog = context['blog']
+        log_user = context['log_user']
 
-    raise Http404
-
-
-def forwardblog(request, b_id):
-    user = User.objects.get(pk=request.user.id)
-    blog = Blog.objects.get(pk=b_id)
-
-    if request.method == 'POST':
-        form = ForwardForm(request.POST)
+        form = ForwardForm(self.request.POST)
 
         if form.is_valid():
             fwdcontent = form.cleaned_data['fwdcontent']
             fwdprivate = form.cleaned_data['fwdprivate']
             fwddate = timezone.now()
             fwdblog = Blog(
-                blog_author=user,
+                blog_author=log_user,
                 blog_title=fwdcontent,
                 blog_postdate=fwddate,
                 blog_private=fwdprivate,
@@ -286,84 +304,102 @@ def forwardblog(request, b_id):
             )
             fwdblog.save()
 
-    context = {
-        'blog': Blog.objects.get(pk=b_id),
-        'self': blog.blog_author_id == user.id,
-        'comment_list': blog.comment_set.all(),
-        'liked': blog.liked_user.filter(pk=user.id).exists(),
-    }
+        return render(self.request, 'blog/viewblog.html', context)
 
-    return render(request, 'blog/viewblog.html', context)
-
-
-def likeblog(request, b_id):
-    blog = Blog.objects.get(pk=b_id)
-    user = User.objects.get(pk=request.user.id)
-    if request.method == 'POST':
-        if user.id != blog.blog_author_id:
-            if blog.liked_user.filter(pk=user.id).exists():
-                blog.liked_user.remove(user)
+    def like(self, request):
+        context = self.get_context_data()
+        blog = context['blog']
+        log_user = context['log_user']
+        id = log_user.id
+        if id != blog.blog_author_id:
+            if blog.liked_user.filter(pk=id).exists():
+                blog.liked_user.remove(log_user)
+                context['liked'] = False
             else:
-                blog.liked_user.add(user)
+                blog.liked_user.add(log_user)
+                context['liked'] = True
 
-    context = {
-        'blog': blog,
-        'self': blog.blog_author_id == user.id,
-        'comment_list': blog.comment_set.all(),
-        'liked': blog.liked_user.filter(pk=user.id).exists(),
-    }
+        return render(self.request, 'blog/viewblog.html', context)
 
-    return render(request, 'blog/viewblog.html', context)
+    def deleteblog(self, request):
+        context = self.get_context_data()
+        blog = context['blog']
+        log_user = context['log_user']
+        if blog.blog_author_id == log_user.id:
+            Blog.objects.get(pk=blog.id).delete()
+            context['blog'] = None
+            context['follow'] = False
+            context['Blog_list'] = Blog.objects.filter(blog_author=log_user)
 
+        context['comment_list'] = None
 
-def searchblog(request):
-    blog = Blog.objects.none()
-    user = User.objects.none()
-    if request.method == 'POST':
-        keyword = request.POST['keyword']
-        blog = Blog.objects.filter(blog_title__contains=keyword, blog_private=False)
-        user = User.objects.filter(username__contains=keyword)
+        return render(self.request, 'blog/personalhomepage.html', context)
 
-    context = {
-        'result_blog': blog,
-        'result_user': user,
-    }
+    def comment(self, request):
+        context = self.get_context_data()
+        blog = context['blog']
+        form = CommentForm(request.POST)
 
-    return render(request, 'blog/searchresult.html', context)
-
-
-def commentblog(request, b_id):
-    user = request.user
-    blog = Blog.objects.get(pk=b_id)
-    context = {
-        'author_id': blog.blog_author_id,
-        'blog': blog,
-        'self': blog.blog_author_id == user.id,
-    }
-    if user.id:
-        if request.method == 'POST':
-            form = CommentForm(request.POST)
-
-            if form.is_valid():
-                author_id = form.cleaned_data['author_id']
-                content = form.cleaned_data['content']
-                date = timezone.now()
-                comment = Comment(comment_author_id=author_id, comment_blog_id=b_id, comment_content=content,
-                                  comment_date=date)
-                try:
-                    comment.save()
-                except Exception:
-                    raise Http404
-                else:
-                    context['comment_list'] = blog.comment_set.all()
-                    return render(request, 'blog/viewblog.html', context)
-
-            else:
+        if form.is_valid():
+            author_id = form.cleaned_data['author_id']
+            content = form.cleaned_data['content']
+            date = timezone.now()
+            comment = Comment(comment_author_id=author_id, comment_blog=blog, comment_content=content,
+                              comment_date=date)
+            try:
+                comment.save()
+            except Exception:
                 raise Http404
-    else:
-        context['comment_error'] = 'Login first.'
+            else:
+                context['comment_list'] = blog.comment_set.all()
+
+        return render(self.request, 'blog/viewblog.html', context)
+
+
+class DeleteCommentView(BaseMixin, View):
+
+    def get(self, request, *args):
+        self.get_context_data()
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        c_id = self.kwargs.get('c_id')
+        if context['self']:
+            Comment.objects.get(pk=c_id).delete()
+            blog = context['blog']
+            context['comment_list'] = blog.comment_set.all()
+
+        return render(self.request, 'blog/viewblog.html', context)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(DeleteCommentView, self).get_context_data(**kwargs)
+
+        log_user = context['log_user']
+        c_id = self.kwargs.get('c_id')
+        comment = Comment.objects.get(pk=c_id)
+        b_id = comment.comment_blog.id
+        blog = Blog.objects.get(pk=b_id)
+        home_id = blog.blog_author_id
+        user = get_object_or_404(User, pk=home_id)
+
+        if type(log_user) is User:
+
+            if home_id == log_user.id:
+                is_self = True
+            else:
+                is_self = False
+
+            context['liked'] = blog.liked_user.filter(pk=log_user.id).exists()
+        else:
+            is_self = False
+            context['liked'] = False
+
+        context['blog'] = blog
+        context['User'] = user
+        context['self'] = is_self
         context['comment_list'] = blog.comment_set.all()
-        return render(request, 'blog/viewblog.html', context)
+
+        return context
 
 
 def deletecomment(request, b_id, c_id):
