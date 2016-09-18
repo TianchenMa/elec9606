@@ -5,7 +5,7 @@
     {% if result_user %}
         <ul>
         {% for user in result_user %}
-            <li>User: <a href="{% url 'blog:personalhomepage' user.id %}">{{ user.username }}</a></li>
+            <li>User: <a href="{% url 'blog:user' user.id 'homepage' %}">{{ user.username }}</a></li>
         {% endfor %}
         </ul>
     {% endif %}
@@ -13,8 +13,9 @@
     {% if result_blog %}
         <ul>
             {% for blog in result_blog %}
-                <li>Title: <a href="{% url 'blog:viewblog' blog.id %}">{{ blog.blog_title }}</a></li>
-                <h5>Post date: {{ blog.blog_postdate }}</h5>
+                <li>Title: <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.blog_title }}</a></li>
+                Author: <a href="{% url 'blog:user' blog.blog_author.id 'homepage' %}">{{ blog.blog_author.username }}</a>
+                <p>Post date: {{ blog.blog_postdate }}</p>
                 <p>Blog Content:{{ blog.blog_content }}</p>
                 <br>
             {% endfor %}

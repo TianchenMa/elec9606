@@ -24,7 +24,7 @@
             {% for blog in Blog_list %}
                 {% if blog.fwd_blog %}
                     <li>Forward: {{ blog.blog_title }} <br> Forward date: {{ blog.blog_postdate }}</li>
-                    <h3>Title: <a href="{% url 'blog:blog' blog.fwd_blog.id 'view' %}">
+                    <h3>Title: <a href="{% url 'blog:blog' blog.id 'view' %}">
                         {{ blog.fwd_blog.blog_title }}</a></h3>
                     Author: <a href="{% url 'blog:user' blog.fwd_blog.blog_author_id 'homepage' %}">
                     {{ blog.fwd_blog.blog_author.username }}</a>
