@@ -401,19 +401,3 @@ class DeleteCommentView(BaseMixin, View):
 
         return context
 
-
-def deletecomment(request, b_id, c_id):
-    user = request.user
-    blog = Blog.objects.get(pk=b_id)
-
-    if request.method == 'POST':
-        Comment.objects.get(pk=c_id).delete()
-
-    context = {
-        'author_id': blog.blog_author_id,
-        'blog': blog,
-        'self': blog.blog_author_id == user.id,
-        'comment_list': blog.comment_set.all()
-    }
-
-    return render(request, 'blog/viewblog.html', context)
