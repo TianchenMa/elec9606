@@ -57,6 +57,20 @@ class BlogForm(forms.Form):
     title = forms.CharField(max_length=100)
     content = forms.CharField(widget=forms.Textarea)
     private = forms.ChoiceField(choices=IS_PRIVATE)
+    music = forms.FileField()
+
+    def clean_file(self):
+        file = self.cleaned_data['music']
+        info = file.content_type.split('/')
+        file_type = info[1]
+
+        if file_type in MUSIC_TYPE:
+            if file._size > MAX_MUSIC_SIZE:
+                return False
+            else:
+                return True
+        else:
+            return False
 
 
 class ForwardForm(forms.Form):

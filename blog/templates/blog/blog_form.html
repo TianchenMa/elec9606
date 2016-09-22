@@ -2,17 +2,19 @@
 
 {% block content %}
 
-{% if request.user %}
-<h3>-{{ request.user.username }}- is writing blog</h3>
-<form action="{% url 'blog:writeblog' %}" method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" name="Submit"/>
-</form>
-{% else %}
-    <p>Please login first.</p>
-{% endif %}
+    {% if error_message %}
+        <p><strong>{{ error_message }}</strong></p>
+    {% endif %}
 
-<a href="{% url 'blog:index' %}">Index</a>
+    {% if request.user %}
+        <h3>-{{ request.user.username }}- is writing blog</h3>
+        <form enctype="multipart/form-data" action="{% url 'blog:writeblog' %}" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" name="Submit"/>
+        </form>
+    {% else %}
+        <p>Please login first.</p>
+    {% endif %}
 
 {% endblock %}
