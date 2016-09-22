@@ -1,0 +1,11 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+
+    <form enctype="multipart/form-data" action="{% url 'blog:usercontrol' 'manage' %}" method="post">
+        {% csrf_token %}
+        profile image: <input type="file" name="profile"/>
+        <input type="submit" name="Submit"/>
+    </form>
+
+{% endblock %}

@@ -18,11 +18,12 @@
             </form>
             <a href="{% url 'blog:usercontrol' 'register' %}">Regist</a>
         {% else %}
-            <img src="{{ log_user.profile_photo }}"/>{{ log_user.username }}
+            <img src="/{{ log_user.profile_photo }}"/>{{ log_user.username }}
             <form action="{% url 'blog:usercontrol' 'logout' %}" method="post">
                 {% csrf_token %}
                 <button type="submit">Logout</button>
             </form>
+            <a href="{% url 'blog:usercontrol' 'manage' %}">Manage</a>
             <a href="{% url 'blog:writeblog' %}">Write blog</a>
         {% endif %}
 

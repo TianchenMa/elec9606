@@ -11,7 +11,7 @@ from django.views.generic.detail import SingleObjectMixin
 from django.core.exceptions import PermissionDenied
 
 from .models import Blog, Comment, User
-from .forms import CommentForm, BlogForm, ForwardForm, LoginForm
+from .forms import CommentForm, BlogForm, ForwardForm, LoginForm, RegisterForm, ImageUploadForm
 from django.views.generic import ListView
 
 
@@ -54,7 +54,9 @@ class UserControl(View, BaseMixin):
     def get(self, request, *args, **kwargs):
         slug = self.kwargs.get('slug')
         if slug == 'register':
-            return render(request, 'blog/register.html')
+            return render(self.request, 'blog/register.html')
+        elif slug == 'manage':
+            return render(self.request, 'blog/upload_profile.html')
 
         raise PermissionDenied
 
@@ -62,19 +64,19 @@ class UserControl(View, BaseMixin):
         slug = self.kwargs.get('slug')
 
         if slug == 'login':
-            return self.login(request)
+            return self.login()
         elif slug == 'logout':
-            return self.logout(request)
+            return self.logout()
         elif slug == 'register':
-            return self.register(request)
-        elif slug == 'registerpage':
-            return self.registerpage(request)
+            return self.register()
         elif slug == 'search':
-            return self.search(request)
+            return self.search()
+        elif slug == 'manage':
+            return self.manage()
 
         raise PermissionDenied
 
-    def login(self, request):
+    def login(self):
         name = self.request.POST['name']
         pwd = self.request.POST['password']
         user = authenticate(username=name, password=pwd)
@@ -82,14 +84,11 @@ class UserControl(View, BaseMixin):
         if user is not None:
             self.request.session.set_expiry(0)
             login(self.request, user)
-            log_message = 'Login successfully.'
-        else:
-            log_message = 'Fail to login.'
 
         return HttpResponseRedirect(reverse('blog:index'))
 
-    def logout(self, request):
-        logout(request)
+    def logout(self):
+        logout(self.request)
         user_list = User.objects.order_by('date_joined')
         context = {
             'user_list': user_list,
@@ -97,15 +96,12 @@ class UserControl(View, BaseMixin):
 
         return render(self.request, 'blog/index.html', context)
 
-    def registerpage(self, request):
-        return render(request, 'blog/register.html')
-
-    def register(self, request):
-        user_name = self.request.POST['username']
-        firstname = self.request.POST['firstname']
-        lastname = self.request.POST['lastname']
-        pwd = self.request.POST['password']
-        e_mail = self.request.POST['email']
+    def register(self):
+        user_name = self.request.POST['r_username']
+        firstname = self.request.POST['r_firstname']
+        lastname = self.request.POST['r_lastname']
+        pwd = self.request.POST['r_password']
+        e_mail = self.request.POST['r_email']
         user = User.objects.create(username=user_name, first_name=firstname, last_name=lastname, email=e_mail)
         user.set_password(pwd)
         try:
@@ -117,14 +113,21 @@ class UserControl(View, BaseMixin):
         else:
             return HttpResponseRedirect(reverse('blog:index'))
 
-    def search(self, request):
+    def manage(self):
+        form = ImageUploadForm(self.request.POST, self.request.FILES)
+
+        if form.is_valid():
+            log_user = User.objects.get(pk=self.request.user.id)
+            log_user.profile_photo = form.cleaned_data['profile']
+            log_user.save()
+
+        return HttpResponseRedirect(reverse('blog:index'))
+
+    def search(self):
         context = self.get_context_data()
-        blog = Blog.objects.none()
-        user = User.objects.none()
-        if request.method == 'POST':
-            keyword = request.POST['keyword']
-            blog = Blog.objects.filter(blog_title__contains=keyword, blog_private=False)
-            user = User.objects.filter(username__contains=keyword)
+        keyword = self.request.POST['keyword']
+        blog = Blog.objects.filter(blog_title__contains=keyword, blog_private=False)
+        user = User.objects.filter(username__contains=keyword)
 
         context['result_blog'] = blog
         context['result_user'] = user
