@@ -1,9 +1,14 @@
 from django import forms
+from elec9606.settings import MAX_IMAGE_SIZE, MAX_MUSIC_SIZE
 
 
 IS_PRIVATE = [
     (True, True),
     (False, False)
+]
+
+MUSIC_TYPE = [
+    'mp3'
 ]
 
 
@@ -23,11 +28,49 @@ class RegisterForm(forms.Form):
 class ImageUploadForm(forms.Form):
     profile = forms.ImageField()
 
+    def clean_file(self):
+        file = self.cleaned_data['profile']
+        if file._size > MAX_IMAGE_SIZE:
+            return False
+        else:
+            return True
+
+
+class MusicUploadForm(forms.Form):
+    music = forms.FileField()
+
+    def clean_file(self):
+        file = self.cleaned_data['music']
+
+        file_type = file.content_type.spilt('.')[1]
+
+        if file_type in MUSIC_TYPE:
+            if file._size > MAX_MUSIC_SIZE:
+                return False
+            else:
+                return True
+        else:
+            return False
+
 
 class BlogForm(forms.Form):
     title = forms.CharField(max_length=100)
     content = forms.CharField(widget=forms.Textarea)
     private = forms.ChoiceField(choices=IS_PRIVATE)
+    music = forms.FileField()
+
+    def clean_file(self):
+        file = self.cleaned_data['music']
+        info = file.content_type.split('/')
+        file_type = info[1]
+
+        if file_type in MUSIC_TYPE:
+            if file._size > MAX_MUSIC_SIZE:
+                return False
+            else:
+                return True
+        else:
+            return False
 
 
 class ForwardForm(forms.Form):

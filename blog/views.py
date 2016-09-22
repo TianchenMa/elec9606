@@ -10,12 +10,17 @@ from django.views.generic.edit import ContextMixin
 from django.views.generic.detail import SingleObjectMixin
 from django.core.exceptions import PermissionDenied
 
-from .models import Blog, Comment, User
-from .forms import CommentForm, BlogForm, ForwardForm, LoginForm, RegisterForm, ImageUploadForm
+from .models import Blog, Comment, User, Music
+from .forms import CommentForm, BlogForm, ForwardForm, LoginForm, RegisterForm, ImageUploadForm, MusicUploadForm
 from django.views.generic import ListView
 
 
 # Create your views here.
+def get_music_information(music):
+    information = music.content_type.split('-')
+    return information
+
+
 class BaseMixin(ContextMixin):
     def get_context_data(self, *args, **kwargs):
         context = super(BaseMixin, self).get_context_data(**kwargs)
@@ -115,11 +120,19 @@ class UserControl(View, BaseMixin):
 
     def manage(self):
         form = ImageUploadForm(self.request.POST, self.request.FILES)
+        context = dict()
 
         if form.is_valid():
-            log_user = User.objects.get(pk=self.request.user.id)
-            log_user.profile_photo = form.cleaned_data['profile']
-            log_user.save()
+            if form.clean_file():
+                log_user = User.objects.get(pk=self.request.user.id)
+                log_user.profile_photo = form.cleaned_data['profile']
+                log_user.save()
+            else:
+                context['error_message'] = 'Image too large'
+                return render(self.request, 'blog/upload_profile.html', context)
+        else:
+            context['error_message'] = 'Submit file is nor an image.'
+            return render(self.request, 'blog/upload_profile.html', context)
 
         return HttpResponseRedirect(reverse('blog:index'))
 
@@ -213,27 +226,40 @@ class WriteBlogView(BaseMixin, CreateView):
         return render(request, 'blog/blog_form.html', {'form': form})
 
     def post(self, request, *args, **kwargs):
-        form = BlogForm(self.request.POST)
+        form = BlogForm(self.request.POST, self.request.FILES)
+        context = dict()
 
         if form.is_valid():
-            title = form.cleaned_data['title']
-            content = form.cleaned_data['content']
-            private = form.cleaned_data['private']
-            post_date = timezone.now()
-            author = request.user.id
-            blog = Blog.objects.create(blog_title=title, blog_content=content, blog_postdate=post_date,
+            if form.clean_file():
+                title = form.cleaned_data['title']
+                content = form.cleaned_data['content']
+                private = form.cleaned_data['private']
+                music = form.cleaned_data['music']
+                # info = get_music_information(music)[0]
+                # singer = info[0].strip()
+                # song = info[1].strip()
+                m = Music.objects.create()
+                m.music = music
+                m.save()
+                post_date = timezone.now()
+                author = request.user.id
+                blog = Blog.objects.create(blog_title=title, blog_content=content, blog_postdate=post_date,
                                        blog_author_id=author, blog_private=private)
-            try:
-                blog.save()
-            except Exception:
-                return render(reverse('blog:weiteblog'))
+                blog.relate_music = m
+                try:
+                    blog.save()
+                except Exception:
+                    return render(reverse('blog:writeblog'))
+                else:
+                    context = {
+                        'blog': blog,
+                    }
+                    return render(request, 'blog/viewblog.html', context)
             else:
-                context = {
-                    'blog': blog,
-                }
-                return render(request, 'blog/viewblog.html', context)
+                context['error_message'] = 'Music file too large.'
+                return render(reverse('blog:writeblog'), context)
         else:
-            raise render(reverse('blog:writeblog'))
+            return render(reverse('blog:writeblog'))
 
 
 class BlogView(BaseMixin, View):
