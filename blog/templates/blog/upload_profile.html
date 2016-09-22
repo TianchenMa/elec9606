@@ -2,6 +2,11 @@
 
 {% block content %}
 
+    {% if error_message %}
+        <p><strong>{{ error_message }}</strong></p>
+    {% endif %}
+
+
     <form enctype="multipart/form-data" action="{% url 'blog:usercontrol' 'manage' %}" method="post">
         {% csrf_token %}
         profile image: <input type="file" name="profile"/>

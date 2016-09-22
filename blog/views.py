@@ -115,11 +115,19 @@ class UserControl(View, BaseMixin):
 
     def manage(self):
         form = ImageUploadForm(self.request.POST, self.request.FILES)
+        context = dict()
 
         if form.is_valid():
-            log_user = User.objects.get(pk=self.request.user.id)
-            log_user.profile_photo = form.cleaned_data['profile']
-            log_user.save()
+            if form.clean_file():
+                log_user = User.objects.get(pk=self.request.user.id)
+                log_user.profile_photo = form.cleaned_data['profile']
+                log_user.save()
+            else:
+                context['error_message'] = 'Image too large'
+                return render(self.request, 'blog/upload_profile.html', context)
+        else:
+            context['error_message'] = 'Submit file is nor an image.'
+            return render(self.request, 'blog/upload_profile.html', context)
 
         return HttpResponseRedirect(reverse('blog:index'))
 

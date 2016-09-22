@@ -56,6 +56,8 @@ class Blog(models.Model):
         related_name="forward_blog",
         null=True
     )
+    # relate_music = models.ForeignKey(Music, on_delete=models.SET_NULL,
+    #                                  null=True, blank=True)
 
     class Meta:
         ordering = ['-blog_postdate']
