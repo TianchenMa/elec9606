@@ -1,6 +1,8 @@
+import datetime
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User, AbstractUser
+from django.utils import timezone
 
 
 GENDER = {
@@ -9,28 +11,32 @@ GENDER = {
 }
 
 
-DEFAULT_PROFILE_PHOTO = '/static/blog/profile/default.jpg'
+DEFAULT_PROFILE_PHOTO = 'static/blog/profile/default.jpg'
 
 
 def user_directory_path(instance, filename):
-    return '/static/blog/profile/user_{0}_{1}'.format(instance.user.id, filename)
+    date = timezone.now().time()
+    return 'static/blog/profile/{0}/{1}.jpg'.format(instance.id, date)
 
 
 def music_directory_path():
-    return '/static/blog/music'
+    return '/static/blog/music/{0}'
 
 
 class User(AbstractUser):
     gender = models.IntegerField(default=0, choices=GENDER.items())
     follow = models.ManyToManyField(settings.AUTH_USER_MODEL)
-    profile_photo = models.ImageField(upload_to=user_directory_path, default=DEFAULT_PROFILE_PHOTO)
+    profile_photo = models.ImageField(
+        upload_to=user_directory_path,
+        default=DEFAULT_PROFILE_PHOTO,
+        blank=True
+    )
 
     class Meta:
         ordering = ['date_joined']
 
 
 class Blog(models.Model):
-    """docstring for Blog"""
     blog_title = models.CharField(max_length=100)
     blog_content = models.TextField(blank=True, null=True)
     blog_postdate = models.DateTimeField("Date posted")

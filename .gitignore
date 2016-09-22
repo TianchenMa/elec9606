@@ -6,3 +6,7 @@ migrations/
 *.pyc
 settings.py
 .idea
+profile/
+music/
+.gitignore
+

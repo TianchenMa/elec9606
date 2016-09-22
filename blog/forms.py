@@ -12,6 +12,18 @@ class LoginForm(forms.Form):
     password = forms.PasswordInput()
 
 
+class RegisterForm(forms.Form):
+    username = forms.CharField(max_length=150)
+    firstname = forms.CharField(max_length=30)
+    lastname = forms.CharField(max_length=30)
+    email = forms.EmailField(max_length=254)
+    password = forms.PasswordInput()
+
+
+class ImageUploadForm(forms.Form):
+    profile = forms.ImageField()
+
+
 class BlogForm(forms.Form):
     title = forms.CharField(max_length=100)
     content = forms.CharField(widget=forms.Textarea)
