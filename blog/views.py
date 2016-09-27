@@ -305,6 +305,7 @@ class BlogView(BaseMixin, View):
         context['User'] = user
         context['self'] = is_self
         context['comment_list'] = blog.comment_set.all()
+        context['music'] = blog.relate_music.music
 
         return context
 
@@ -329,7 +330,8 @@ class BlogView(BaseMixin, View):
                 blog_title=fwdcontent,
                 blog_postdate=fwddate,
                 blog_private=fwdprivate,
-                fwd_blog=blog
+                fwd_blog=blog,
+                relate_music=blog.relate_music
             )
             fwdblog.save()
 
@@ -361,6 +363,7 @@ class BlogView(BaseMixin, View):
             context['Blog_list'] = Blog.objects.filter(blog_author=log_user)
 
         context['comment_list'] = None
+        context['music'] = None
 
         return render(self.request, 'blog/personalhomepage.html', context)
 

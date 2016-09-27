@@ -23,6 +23,10 @@
         <p>Content: <br>{{ blog.fwd_blog.blog_content }}</p>
     {% endif %}
 
+    {% if music %}
+        <audio src="/{{ music }}" controls="controls"></audio>
+    {% endif %}
+
     <form action="{% url 'blog:blog' blog.id 'forward' %}" method="post">
         {% csrf_token %}
         Forward message: <input type="text" name="fwdcontent"/>
