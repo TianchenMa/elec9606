@@ -12,7 +12,7 @@
         {% if not request.user.id %}
             <form action="{% url 'blog:usercontrol' 'login' %}" method="post">
                 {% csrf_token %}
-                User name: <input type="text" name="name">
+                User name: <input type="text" name="username">
                 Password: <input type="password" name="password">
                 <input type="submit" value="Login">
             </form>

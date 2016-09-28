@@ -14,7 +14,7 @@ MUSIC_TYPE = [
 
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=150)
-    password = forms.PasswordInput()
+    password = forms.CharField(max_length=32, widget=forms.PasswordInput)
 
 
 class RegisterForm(forms.Form):
@@ -22,7 +22,7 @@ class RegisterForm(forms.Form):
     firstname = forms.CharField(max_length=30)
     lastname = forms.CharField(max_length=30)
     email = forms.EmailField(max_length=254)
-    password = forms.PasswordInput()
+    password = forms.CharField(max_length=32, widget=forms.PasswordInput)
 
 
 class ImageUploadForm(forms.Form):
