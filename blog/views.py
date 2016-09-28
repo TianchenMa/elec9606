@@ -82,13 +82,16 @@ class UserControl(View, BaseMixin):
         raise PermissionDenied
 
     def login(self):
-        name = self.request.POST['name']
-        pwd = self.request.POST['password']
-        user = authenticate(username=name, password=pwd)
+        form = LoginForm(self.request.POST)
 
-        if user is not None:
-            self.request.session.set_expiry(0)
-            login(self.request, user)
+        if form.is_valid():
+            name = form.cleaned_data['username']
+            pwd = form.cleaned_data['password']
+            user = authenticate(username=name, password=pwd)
+
+            if user is not None:
+                self.request.session.set_expiry(0)
+                login(self.request, user)
 
         return HttpResponseRedirect(reverse('blog:index'))
 
@@ -102,19 +105,22 @@ class UserControl(View, BaseMixin):
         return render(self.request, 'blog/index.html', context)
 
     def register(self):
-        user_name = self.request.POST['r_username']
-        firstname = self.request.POST['r_firstname']
-        lastname = self.request.POST['r_lastname']
-        pwd = self.request.POST['r_password']
-        e_mail = self.request.POST['r_email']
-        user = User.objects.create(username=user_name, first_name=firstname, last_name=lastname, email=e_mail)
-        user.set_password(pwd)
+        form = RegisterForm(self.request.POST)
+
+        if form.is_valid():
+            user_name = form.cleaned_data['username']
+            firstname = form.cleaned_data['firstname']
+            lastname = form.cleaned_data['lastname']
+            pwd = form.cleaned_data['password']
+            e_mail = form.cleaned_data['email']
+            user = User.objects.create(username=user_name, first_name=firstname, last_name=lastname, email=e_mail)
+            user.set_password(pwd)
         try:
             user.save()
             user = authenticate(username=user_name, password=pwd)
             login(self.request, user)
         except Exception:
-            pass
+            return render(self.request, 'blog/register.html')
         else:
             return HttpResponseRedirect(reverse('blog:index'))
 
@@ -244,7 +250,7 @@ class WriteBlogView(BaseMixin, CreateView):
                 post_date = timezone.now()
                 author = request.user.id
                 blog = Blog.objects.create(blog_title=title, blog_content=content, blog_postdate=post_date,
-                                       blog_author_id=author, blog_private=private)
+                                           blog_author_id=author, blog_private=private)
                 blog.relate_music = m
                 try:
                     blog.save()
@@ -263,7 +269,6 @@ class WriteBlogView(BaseMixin, CreateView):
 
 
 class BlogView(BaseMixin, View):
-
     def get(self, request, *args, **kwargs):
         slug = self.kwargs.get('slug')
         if slug == 'view':
@@ -389,7 +394,6 @@ class BlogView(BaseMixin, View):
 
 
 class DeleteCommentView(BaseMixin, View):
-
     def get(self, request, *args):
         self.get_context_data()
 
@@ -432,4 +436,3 @@ class DeleteCommentView(BaseMixin, View):
         context['comment_list'] = blog.comment_set.all()
 
         return context
-
