@@ -1,6 +1,8 @@
+import datetime
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User, AbstractUser
+from django.utils import timezone
 
 
 GENDER = {
@@ -9,28 +11,41 @@ GENDER = {
 }
 
 
-DEFAULT_PROFILE_PHOTO = '/static/blog/profile/default.jpg'
+DEFAULT_PROFILE_PHOTO = 'static/blog/profile/default.jpg'
 
 
 def user_directory_path(instance, filename):
-    return '/static/blog/profile/user_{0}_{1}'.format(instance.user.id, filename)
+    date = timezone.now().time()
+    return 'static/blog/profile/{0}/{1}.jpg'.format(instance.id, date)
 
 
-def music_directory_path():
-    return '/static/blog/music'
+def music_directory_path(instance, filename):
+    return 'static/blog/music/{0}'.format(filename)
 
 
 class User(AbstractUser):
     gender = models.IntegerField(default=0, choices=GENDER.items())
     follow = models.ManyToManyField(settings.AUTH_USER_MODEL)
-    profile_photo = models.ImageField(upload_to=user_directory_path, default=DEFAULT_PROFILE_PHOTO)
+    profile_photo = models.ImageField(
+        upload_to=user_directory_path,
+        default=DEFAULT_PROFILE_PHOTO,
+        blank=True
+    )
 
     class Meta:
         ordering = ['date_joined']
 
 
+class Music(models.Model):
+    singer = models.CharField(max_length=50, null=True)
+    song_name = models.CharField(max_length=100, null=True)
+    music = models.FileField(
+        upload_to=music_directory_path,
+        null=True
+    )
+
+
 class Blog(models.Model):
-    """docstring for Blog"""
     blog_title = models.CharField(max_length=100)
     blog_content = models.TextField(blank=True, null=True)
     blog_postdate = models.DateTimeField("Date posted")
@@ -50,19 +65,18 @@ class Blog(models.Model):
         related_name="forward_blog",
         null=True
     )
+    relate_music = models.ForeignKey(
+        Music,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
 
     class Meta:
         ordering = ['-blog_postdate']
 
     def __str__(self):
         return "Title: " + self.blog_title + "; Author: " + User.objects.get(pk=self.blog_author_id).__str__()
-
-
-class Music(models.Model):
-    singer = models.CharField(max_length=50)
-    song_name = models.CharField(max_length=100)
-    music = models.FileField(upload_to=music_directory_path)
-    music_blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
 
 
 class Comment(models.Model):
