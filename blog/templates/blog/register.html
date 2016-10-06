@@ -1,18 +1,12 @@
-<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/html">
-<head>
-    <meta charset="UTF-8">
-    <title>Register</title>
-</head>
-<body>
-<form action="{% url 'blog:registerresult' %}" method="post">
-    {% csrf_token %}
-    User name: <input type="text" name="username"/><br>
-    First name: <input type="text" name="firstname"/><br>
-    Last name: <input type="text" name="lastname"/><br>
-    Password: <input type="password" name="password"/><br>
-    Email: <input type="email" name="email"/><br>
-    <input type="submit" name="Submit"/>
-</form>
-</body>
-</html>
+{% extends 'blog/base.html' %}
+{% block content %}
+    <form action="{% url 'blog:usercontrol' 'register' %}" method="post">
+        {% csrf_token %}
+        User name: <input type="text" name="username"/><br>
+        First name: <input type="text" name="firstname"/><br>
+        Last name: <input type="text" name="lastname"/><br>
+        Password: <input type="password" name="password"/><br>
+        Email: <input type="email" name="email"/><br>
+        <input type="submit" name="Submit"/>
+    </form>
+{% endblock %}

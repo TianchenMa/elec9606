@@ -1,18 +1,29 @@
 {% extends "./base.html" %}
 
 {% block content %}
+<div class="container">
 
-    <h1>{{ User.username }}'s Blog</h1>
-    {% if not self %}
+            <nav class="navbar navbar-default navbar-static-top" role="navigation">
+                <div class="navbar-header">
+                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">{{ User.username }}'s Blog</a>
+                </div>
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav">
+                        <li class="active">
+                                 {% if not self %}
         <form action="{% url 'blog:user' User.id 'follow' %}" method="post">
             {% csrf_token %}
             {% if not follow %}
-                <button type="submit">Follow</button>
+                <button type="submit" class="btn btn-primary btn-lg">Follow</button>
             {% else %}
-                <button type="submit">Unfollow</button>
+                <button type="submit" class="btn btn-primary btn-lg">Unfollow</button>
             {% endif %}
         </form>
     {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </nav>
 
 
     {% if error_message %}
@@ -20,37 +31,152 @@
     {% endif %}
 
     {% if Blog_list %}
-        <ul>
-            {% for blog in Blog_list %}
-                {% if blog.fwd_blog %}
-                    <li>Forward: {{ blog.blog_title }} <br> Forward date: {{ blog.blog_postdate }}</li>
-                    <h3>Title: <a href="{% url 'blog:viewblog' blog.fwd_blog.id %}">
-                        {{ blog.fwd_blog.blog_title }}</a></h3>
-                    Author: <a href="{% url 'blog:user' blog.fwd_blog.blog_author_id 'homepage' %}">
-                        {{ blog.fwd_blog.blog_author.username }}</a>
-                    <h5>Post date: {{ blog.fwd_blog.blog_postdate }}
-                        {% if self %}
-                            ---<a href="{% url 'blog:deleteblog' blog.id %}">Delete</a>
-                        {% endif %}
-                    </h5>
-                    <h4>Blog Content:{{ blog.fwd_blog.blog_content }}</h4>
-                    <br>
 
+        <ul>
+        {% for blog in Blog_list %}
+            {% if not blog.blog_private or self %}
+                {% if blog.fwd_blog %}
+
+ <div class="row clearfix cell3">
+        <div class="col-md-12 column" >
+            <nav class="navbar navbar-inverse" role="navigation">
+                <div class="navbar-header">
+                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">Title:</a>
+                </div>
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav">
+                        <li class="active">
+                             <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.fwd_blog.blog_title }}</a>
+                        </li>
+                                              <li class="active">
+                                {% if self %}
+                            <form action="{% url 'blog:blog' blog.id 'delete' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-lg">Delete</button>
+                            </form>
+    {% endif %}
+                        </li> 
+                    </ul>
+                </div>
+                       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+  
+                </div>
+
+            </nav>
+            <table class="table">
+                <thead>
+                                    <tr>
+                        <th>
+                            <p> Author: </p>
+                        </th>
+                        <th>
+                            <a href="{% url 'blog:user' blog.fwd_blog.blog_author_id 'homepage' %}">{{ blog.fwd_blog.blog_author.username }}</a>
+                        </th>
+                    </tr>
+                    <tr>
+                        <th>
+                            <p> Post date: </p>
+                        </th>
+                        <th>
+                            <p>{{ blog.fwd_blog.blog_postdate }}</p>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                        <p>Blog content:</p>    
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        <p>{{ blog.fwd_blog.blog_content }}</p>
+                        </td>
+                            
+                    </tr>
+                                        <tr>
+                        <td>
+                        <p>Forward message:</p>    
+                        </td>
+                        <td>
+                        <p>{{ blog.blog_title }}</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        <p>Forward date:</p>
+                        </td>
+                        <td>
+                        <p>{{ blog.blog_postdate }}<p>
+                        </td>
+                            
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div><br>
                 {% else %}
 
-                    <li>Title: <a href="{% url 'blog:viewblog' blog.id %}">{{ blog.blog_title }}</a></li>
-                    <h5>Post date: {{ blog.blog_postdate }}
-                        {% if self %}
-                            ---<a href="{% url 'blog:deleteblog' blog.id %}">Delete</a>
-                        {% endif %}
-                    </h5>
-                    <h4>Blog Content:{{ blog.blog_content }}</h4>
-                    <br>
+ <div class="row clearfix cell3">
+        <div class="col-md-12 column" >
+                        <nav class="navbar navbar-inverse" role="navigation">
+                <div class="navbar-header">
+                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">Title:</a>
+                </div>
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav">
+                        <li class="active">
+                             <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.blog_title }}</a>
+                        </li>
+                                              <li class="active">
+                                {% if self %}
+                            <form action="{% url 'blog:blog' blog.id 'delete' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-lg">Delete</button>
+                            </form>
+    {% endif %}
+                        </li> 
+                    </ul>
+                </div>
+                       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+  
+                </div>
+
+            </nav>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>
+                            <a> Post date: </a>
+                        </th>
+                        <th>
+                            <a>{{ blog.blog_postdate }}</a>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                        <p>Blog content:</p>    
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        <p>{{ blog.blog_content }}</p>
+                        </td>
+                            
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div><br>
+
                 {% endif %}
-            {% endfor %}
+            {% endif %}
+        {% endfor %}
         </ul>
     {% else %}
         <p>No blog to show.</p>
     {% endif %}
-
+</div>
 {% endblock %}
