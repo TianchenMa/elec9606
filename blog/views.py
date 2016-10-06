@@ -310,7 +310,8 @@ class BlogView(BaseMixin, View):
         context['User'] = user
         context['self'] = is_self
         context['comment_list'] = blog.comment_set.all()
-        context['music'] = blog.relate_music.music
+        if blog.relate_music is not None:
+            context['music'] = blog.relate_music.music
 
         return context
 
