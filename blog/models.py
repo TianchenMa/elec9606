@@ -50,6 +50,7 @@ class Blog(models.Model):
     blog_content = models.TextField(blank=True, null=True)
     blog_postdate = models.DateTimeField("Date posted")
     blog_private = models.BooleanField(default=False)
+    popularity = models.IntegerField(default=0)
     liked_user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="liked_user"

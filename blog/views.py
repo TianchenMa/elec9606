@@ -1,3 +1,4 @@
+from django.db.models import F
 from django.shortcuts import render, get_object_or_404, render_to_response, Http404
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy
@@ -29,6 +30,8 @@ class BaseMixin(ContextMixin):
             context['log_user'] = user
         else:
             context['log_user'] = None
+
+        context['popularity'] = Blog.objects.order_by('-popularity', '-id')[0:5]
 
         return context
 
@@ -159,13 +162,13 @@ class UserView(BaseMixin, View):
         slug = self.kwargs.get('slug')
 
         if slug == 'homepage':
-            return self.homepage(request)
+            return self.homepage()
 
     def post(self, request, *args, **kwargs):
         slug = self.kwargs.get('slug')
 
         if slug == 'follow':
-            return self.follow(request)
+            return self.follow()
 
     def get_context_data(self, **kwargs):
         context = super(UserView, self).get_context_data(**kwargs)
@@ -194,12 +197,12 @@ class UserView(BaseMixin, View):
 
         return context
 
-    def homepage(self, request):
+    def homepage(self):
         context = self.get_context_data()
 
         return render(self.request, 'blog/personalhomepage.html', context)
 
-    def follow(self, request):
+    def follow(self):
         context = self.get_context_data()
         log_user = context['log_user']
         user = context['User']
@@ -241,9 +244,6 @@ class WriteBlogView(BaseMixin, CreateView):
                 content = form.cleaned_data['content']
                 private = form.cleaned_data['private']
                 music = form.cleaned_data['music']
-                # info = get_music_information(music)[0]
-                # singer = info[0].strip()
-                # song = info[1].strip()
                 m = Music.objects.create()
                 m.music = music
                 m.save()
@@ -272,19 +272,19 @@ class BlogView(BaseMixin, View):
     def get(self, request, *args, **kwargs):
         slug = self.kwargs.get('slug')
         if slug == 'view':
-            return self.view(request)
+            return self.view()
 
     def post(self, request, *args, **kwargs):
         slug = self.kwargs.get('slug')
 
         if slug == 'delete':
-            return self.deleteblog(request)
+            return self.deleteblog()
         elif slug == 'like':
-            return self.like(request)
+            return self.like()
         elif slug == 'forward':
-            return self.forward(request)
+            return self.forward()
         elif slug == 'comment':
-            return self.comment(request)
+            return self.comment()
 
     def get_context_data(self, *args, **kwargs):
         context = super(BlogView, self).get_context_data(**kwargs)
@@ -315,12 +315,12 @@ class BlogView(BaseMixin, View):
 
         return context
 
-    def view(self, request):
+    def view(self):
         context = self.get_context_data()
 
         return render(self.request, 'blog/viewblog.html', context)
 
-    def forward(self, request):
+    def forward(self):
         context = self.get_context_data()
         blog = context['blog']
         log_user = context['log_user']
@@ -340,25 +340,32 @@ class BlogView(BaseMixin, View):
                 relate_music=blog.relate_music
             )
             fwdblog.save()
+            blog.popularity = F('popularity') + 1
+            blog.save()
 
         return render(self.request, 'blog/viewblog.html', context)
 
-    def like(self, request):
+    def like(self):
         context = self.get_context_data()
         blog = context['blog']
         log_user = context['log_user']
-        id = log_user.id
-        if id != blog.blog_author_id:
-            if blog.liked_user.filter(pk=id).exists():
+        owner_id = log_user.id
+
+        if owner_id != blog.blog_author_id:
+            if blog.liked_user.filter(pk=owner_id).exists():
                 blog.liked_user.remove(log_user)
                 context['liked'] = False
+                blog.popularity = F('popularity') - 1
+                blog.save()
             else:
                 blog.liked_user.add(log_user)
                 context['liked'] = True
+                blog.popularity = F('popularity') + 1
+                blog.save()
 
         return render(self.request, 'blog/viewblog.html', context)
 
-    def deleteblog(self, request):
+    def deleteblog(self):
         context = self.get_context_data()
         blog = context['blog']
         log_user = context['log_user']
@@ -373,10 +380,10 @@ class BlogView(BaseMixin, View):
 
         return render(self.request, 'blog/personalhomepage.html', context)
 
-    def comment(self, request):
+    def comment(self):
         context = self.get_context_data()
         blog = context['blog']
-        form = CommentForm(request.POST)
+        form = CommentForm(self.request.POST)
 
         if form.is_valid():
             author_id = form.cleaned_data['author_id']
@@ -386,6 +393,8 @@ class BlogView(BaseMixin, View):
                               comment_date=date)
             try:
                 comment.save()
+                blog.popularity = F('popularity') + 1
+                blog.save()
             except Exception:
                 raise Http404
             else:
