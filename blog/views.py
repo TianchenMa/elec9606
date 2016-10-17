@@ -11,7 +11,7 @@ from django.views.generic.edit import ContextMixin
 from django.views.generic.detail import SingleObjectMixin
 from django.core.exceptions import PermissionDenied
 
-from .models import Blog, Comment, User, Music
+from .models import Blog, Comment, User, Music, Relationship
 from .forms import CommentForm, BlogForm, ForwardForm, LoginForm, RegisterForm, ImageUploadForm, MusicUploadForm
 from django.views.generic import ListView
 
@@ -118,14 +118,16 @@ class UserControl(View, BaseMixin):
             e_mail = form.cleaned_data['email']
             user = User.objects.create(username=user_name, first_name=firstname, last_name=lastname, email=e_mail)
             user.set_password(pwd)
-        try:
-            user.save()
-            user = authenticate(username=user_name, password=pwd)
-            login(self.request, user)
-        except Exception:
-            return render(self.request, 'blog/register.html')
-        else:
-            return HttpResponseRedirect(reverse('blog:index'))
+            try:
+                user.save()
+                user = authenticate(username=user_name, password=pwd)
+                login(self.request, user)
+            except Exception:
+                return render(self.request, 'blog/register.html')
+            else:
+                pass
+
+        return HttpResponseRedirect(reverse('blog:index'))
 
     def manage(self):
         form = ImageUploadForm(self.request.POST, self.request.FILES)
@@ -185,6 +187,10 @@ class UserView(BaseMixin, View):
             else:
                 is_self = False
                 blog_list = blog_list.filter(blog_private=False)
+                try:
+                    context['follow'] = user in log_user.follow.all()
+                except AttributeError:
+                    context['follow'] = False
 
         else:
             is_self = False
@@ -204,20 +210,21 @@ class UserView(BaseMixin, View):
 
     def follow(self):
         context = self.get_context_data()
+        added_user = context['User']
         log_user = context['log_user']
-        user = context['User']
-        home_id = self.kwargs.get('u_id')
 
         if type(log_user) is User:
-            follow = User.objects.get(pk=home_id)
-
-            if log_user.follow.filter(pk=home_id).exists():
-                log_user.follow.remove(follow)
+            if not context['follow']:
+                relationship = Relationship.objects.create(
+                    from_user=log_user,
+                    to_user=added_user,
+                    add_date=timezone.now()
+                )
+                relationship.save()
+                context['follow'] = True
             else:
-                log_user.follow.add(follow)
-            context['follow'] = user in log_user.follow.all()
-        else:
-            context['follow'] = False
+                Relationship.objects.filter(from_user=log_user, to_user=added_user).delete()
+                context['follow'] = False
 
         return render(self.request, 'blog/personalhomepage.html', context)
 
