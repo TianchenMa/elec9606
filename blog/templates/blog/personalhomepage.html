@@ -40,7 +40,6 @@
                     <br>
 
                 {% else %}
-
                     <li>Title: <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.blog_title }}</a></li>
                     <p>Post date: {{ blog.blog_postdate }}
                         {% if self %}
