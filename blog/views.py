@@ -1,19 +1,15 @@
 from django.db.models import F
-from django.shortcuts import render, get_object_or_404, render_to_response, Http404
-from django.http import HttpResponseRedirect, HttpResponse
-from django.urls import reverse_lazy
+from django.shortcuts import render, get_object_or_404, Http404
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
-from django.views.generic import TemplateView
-from django.views.generic import View, ListView, CreateView, DeleteView, DetailView
+from django.views.generic import View, ListView
 from django.views.generic.edit import ContextMixin
-from django.views.generic.detail import SingleObjectMixin
 from django.core.exceptions import PermissionDenied
 
 from .models import Blog, Comment, User, Music, Relationship
 from .forms import CommentForm, BlogForm, ForwardForm, LoginForm, RegisterForm, ImageUploadForm, MusicUploadForm
-from django.views.generic import ListView
 
 
 # Create your views here.
@@ -23,15 +19,16 @@ def get_music_information(music):
 
 
 class BaseMixin(ContextMixin):
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, **kwargs):
         context = super(BaseMixin, self).get_context_data(**kwargs)
+
         if self.request.user.is_active:
             user = User.objects.get(pk=self.request.user.id)
             context['log_user'] = user
         else:
             context['log_user'] = None
 
-        context['popularity'] = Blog.objects.order_by('-popularity', '-id')[0:5]
+        context['popularity'] = Blog.objects.filter(blog_private=False).order_by('-popularity', '-id')[0:5]
 
         return context
 
@@ -58,17 +55,20 @@ class IndexView(BaseMixin, ListView):
         return User.objects.all()
 
 
-class UserControl(View, BaseMixin):
-    def get(self, request, *args, **kwargs):
+class UserControlView(BaseMixin, View):
+    def get(self, *args, **kwargs):
         slug = self.kwargs.get('slug')
+
         if slug == 'register':
             return render(self.request, 'blog/register.html')
         elif slug == 'manage':
-            return render(self.request, 'blog/upload_profile.html')
+            context = super(UserControlView, self).get_context_data(**kwargs)
+
+            return render(self.request, 'blog/upload_profile.html', context)
 
         raise PermissionDenied
 
-    def post(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         slug = self.kwargs.get('slug')
 
         if slug == 'login':
@@ -105,7 +105,7 @@ class UserControl(View, BaseMixin):
             'user_list': user_list,
         }
 
-        return render(self.request, 'blog/index.html', context)
+        return HttpResponseRedirect(reverse('blog:index'))
 
     def register(self):
         form = RegisterForm(self.request.POST)
@@ -160,17 +160,21 @@ class UserControl(View, BaseMixin):
 
 
 class UserView(BaseMixin, View):
-    def get(self, request, *args, **kwargs):
+    def get(self, *args, **kwargs):
         slug = self.kwargs.get('slug')
 
         if slug == 'homepage':
             return self.homepage()
+        else:
+            return Http404
 
-    def post(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         slug = self.kwargs.get('slug')
 
         if slug == 'follow':
             return self.follow()
+        else:
+            raise PermissionDenied
 
     def get_context_data(self, **kwargs):
         context = super(UserView, self).get_context_data(**kwargs)
@@ -226,24 +230,25 @@ class UserView(BaseMixin, View):
                 Relationship.objects.filter(from_user=log_user, to_user=added_user).delete()
                 context['follow'] = False
 
-        return render(self.request, 'blog/personalhomepage.html', context)
+        return HttpResponseRedirect(reverse('blog:user', kwargs={'u_id': added_user.id, 'slug': 'homepage'}))
 
 
-class WriteBlogView(BaseMixin, CreateView):
-    model = Blog
-    fields = [
-        'title',
-        'content',
-        'private',
-    ]
+class WriteBlogView(BaseMixin, View):
+    def get_context_data(self, **kwargs):
+        context = super(WriteBlogView, self).get_context_data(**kwargs)
 
-    def get(self, request, *args, **kwargs):
+        return context
+
+    def get(self, *args, **kwargs):
         form = BlogForm()
-        return render(request, 'blog/blog_form.html', {'form': form})
+        context = self.get_context_data()
+        context['form'] = form
 
-    def post(self, request, *args, **kwargs):
+        return render(self.request, 'blog/blog_form.html', context)
+
+    def post(self, *args, **kwargs):
         form = BlogForm(self.request.POST, self.request.FILES)
-        context = dict()
+        context = self.get_context_data()
 
         if form.is_valid():
             if form.clean_file():
@@ -255,7 +260,7 @@ class WriteBlogView(BaseMixin, CreateView):
                 m.music = music
                 m.save()
                 post_date = timezone.now()
-                author = request.user.id
+                author = self.request.user.id
                 blog = Blog.objects.create(blog_title=title, blog_content=content, blog_postdate=post_date,
                                            blog_author_id=author, blog_private=private)
                 blog.relate_music = m
@@ -264,24 +269,21 @@ class WriteBlogView(BaseMixin, CreateView):
                 except Exception:
                     return render(reverse('blog:writeblog'))
                 else:
-                    context = {
-                        'blog': blog,
-                    }
-                    return render(request, 'blog/viewblog.html', context)
+                    return HttpResponseRedirect(reverse('blog:blog', kwargs={'b_id': blog.id, 'slug': 'view'}))
             else:
                 context['error_message'] = 'Music file too large.'
-                return render(reverse('blog:writeblog'), context)
+                return HttpResponseRedirect(reverse('blog:writeblog'))
         else:
-            return render(reverse('blog:writeblog'))
+            return HttpResponseRedirect(reverse('blog:writeblog'))
 
 
 class BlogView(BaseMixin, View):
-    def get(self, request, *args, **kwargs):
+    def get(self, *args, **kwargs):
         slug = self.kwargs.get('slug')
         if slug == 'view':
             return self.view()
 
-    def post(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         slug = self.kwargs.get('slug')
 
         if slug == 'delete':
@@ -350,7 +352,7 @@ class BlogView(BaseMixin, View):
             blog.popularity = F('popularity') + 1
             blog.save()
 
-        return render(self.request, 'blog/viewblog.html', context)
+        return HttpResponseRedirect(reverse('blog:blog', kwargs={'b_id': blog.id, 'slug': 'view'}))
 
     def like(self):
         context = self.get_context_data()
@@ -385,7 +387,7 @@ class BlogView(BaseMixin, View):
         context['comment_list'] = None
         context['music'] = None
 
-        return render(self.request, 'blog/personalhomepage.html', context)
+        return HttpResponseRedirect(reverse('blog:user', kwargs={'u_id': log_user.id, 'slug': 'homepage'}))
 
     def comment(self):
         context = self.get_context_data()
@@ -407,22 +409,23 @@ class BlogView(BaseMixin, View):
             else:
                 context['comment_list'] = blog.comment_set.all()
 
-        return render(self.request, 'blog/viewblog.html', context)
+        return HttpResponseRedirect(reverse('blog:blog', kwargs={'b_id': blog.id, 'slug': 'view'}))
 
 
 class DeleteCommentView(BaseMixin, View):
     def get(self, request, *args):
         self.get_context_data()
 
-    def post(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         context = self.get_context_data()
         c_id = self.kwargs.get('c_id')
+
         if context['self']:
             Comment.objects.get(pk=c_id).delete()
             blog = context['blog']
             context['comment_list'] = blog.comment_set.all()
 
-        return render(self.request, 'blog/viewblog.html', context)
+        return HttpResponseRedirect(reverse('blog:blog', kwargs={'b_id': blog.id, 'slug': 'view'}))
 
     def get_context_data(self, *args, **kwargs):
         context = super(DeleteCommentView, self).get_context_data(**kwargs)
