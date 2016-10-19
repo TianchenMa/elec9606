@@ -57,7 +57,7 @@ class BlogForm(forms.Form):
     title = forms.CharField(max_length=100)
     content = forms.CharField(widget=forms.Textarea)
     private = forms.ChoiceField(choices=IS_PRIVATE)
-    music = forms.FileField()
+    music = forms.FileField(allow_empty_file=True)
 
     def clean_file(self):
         file = self.cleaned_data['music']

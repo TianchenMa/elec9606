@@ -1,9 +1,11 @@
+from django.contrib.auth.decorators import login_required
 from django.db.models import F
 from django.shortcuts import render, get_object_or_404, Http404
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
+from django.utils.decorators import method_decorator
 from django.views.generic import View, ListView
 from django.views.generic.edit import ContextMixin
 from django.core.exceptions import PermissionDenied
@@ -33,6 +35,7 @@ class BaseMixin(ContextMixin):
         return context
 
 
+# URL name = 'index'
 class IndexView(BaseMixin, ListView):
     template_name = 'blog/index.html'
     paginate_by = 10
@@ -55,6 +58,7 @@ class IndexView(BaseMixin, ListView):
         return User.objects.all()
 
 
+# URL name = 'usercontrol'
 class UserControlView(BaseMixin, View):
     def get(self, *args, **kwargs):
         slug = self.kwargs.get('slug')
@@ -62,9 +66,7 @@ class UserControlView(BaseMixin, View):
         if slug == 'register':
             return render(self.request, 'blog/register.html')
         elif slug == 'manage':
-            context = super(UserControlView, self).get_context_data(**kwargs)
-
-            return render(self.request, 'blog/upload_profile.html', context)
+            return self.to_manage_page(self.request)
 
         raise PermissionDenied
 
@@ -80,11 +82,16 @@ class UserControlView(BaseMixin, View):
         elif slug == 'search':
             return self.search()
         elif slug == 'manage':
-            return self.manage()
+            return self.manage(self.request)
 
         raise PermissionDenied
 
     def login(self):
+        try:
+            next_page = self.request.POST['next']
+        except KeyError:
+            next_page = self.request.META['HTTP_REFERER']
+
         form = LoginForm(self.request.POST)
 
         if form.is_valid():
@@ -96,16 +103,13 @@ class UserControlView(BaseMixin, View):
                 self.request.session.set_expiry(0)
                 login(self.request, user)
 
-        return HttpResponseRedirect(reverse('blog:index'))
+        return HttpResponseRedirect(next_page)
 
     def logout(self):
         logout(self.request)
-        user_list = User.objects.order_by('date_joined')
-        context = {
-            'user_list': user_list,
-        }
+        next_page = self.request.META['HTTP_REFERER']
 
-        return HttpResponseRedirect(reverse('blog:index'))
+        return HttpResponseRedirect(next_page)
 
     def register(self):
         form = RegisterForm(self.request.POST)
@@ -129,7 +133,14 @@ class UserControlView(BaseMixin, View):
 
         return HttpResponseRedirect(reverse('blog:index'))
 
-    def manage(self):
+    @method_decorator(login_required)
+    def to_manage_page(self, request):
+        context = super(UserControlView, self).get_context_data()
+
+        return render(self.request, 'blog/upload_profile.html', context)
+
+    @method_decorator(login_required)
+    def manage(self, request):
         form = ImageUploadForm(self.request.POST, self.request.FILES)
         context = dict()
 
@@ -159,12 +170,17 @@ class UserControlView(BaseMixin, View):
         return render(self.request, 'blog/searchresult.html', context)
 
 
+# URL name = 'user'
 class UserView(BaseMixin, View):
     def get(self, *args, **kwargs):
         slug = self.kwargs.get('slug')
 
         if slug == 'homepage':
             return self.homepage()
+        elif slug == 'follow':
+            home_id = self.kwargs.get('u_id')
+
+            return HttpResponseRedirect(reverse('blog:user', kwargs={'u_id': home_id, 'slug': 'homepage'}))
         else:
             return Http404
 
@@ -172,7 +188,7 @@ class UserView(BaseMixin, View):
         slug = self.kwargs.get('slug')
 
         if slug == 'follow':
-            return self.follow()
+            return self.follow(self.request)
         else:
             raise PermissionDenied
 
@@ -212,25 +228,26 @@ class UserView(BaseMixin, View):
 
         return render(self.request, 'blog/personalhomepage.html', context)
 
-    def follow(self):
+    @method_decorator(login_required)
+    def follow(self, request):
         context = self.get_context_data()
         added_user = context['User']
         log_user = context['log_user']
 
-        if type(log_user) is User:
-            if not context['follow']:
-                relationship = Relationship.objects.create(
-                    from_user=log_user,
-                    to_user=added_user,
-                    add_date=timezone.now()
-                )
-                relationship.save()
-                context['follow'] = True
-            else:
-                Relationship.objects.filter(from_user=log_user, to_user=added_user).delete()
-                context['follow'] = False
+        if not context['follow']:
+            relationship = Relationship.objects.create(
+                from_user=log_user,
+                to_user=added_user,
+                add_date=timezone.now()
+            )
+            relationship.save()
+            context['follow'] = True
+        else:
+            Relationship.objects.filter(from_user=log_user, to_user=added_user).delete()
+            context['follow'] = False
 
-        return HttpResponseRedirect(reverse('blog:user', kwargs={'u_id': added_user.id, 'slug': 'homepage'}))
+        return HttpResponseRedirect(
+            reverse('blog:user', kwargs={'u_id': added_user.id, 'slug': 'homepage'}))  # URL name = 'writeblog'
 
 
 class WriteBlogView(BaseMixin, View):
@@ -239,6 +256,7 @@ class WriteBlogView(BaseMixin, View):
 
         return context
 
+    @method_decorator(login_required)
     def get(self, *args, **kwargs):
         form = BlogForm()
         context = self.get_context_data()
@@ -246,7 +264,8 @@ class WriteBlogView(BaseMixin, View):
 
         return render(self.request, 'blog/blog_form.html', context)
 
-    def post(self, *args, **kwargs):
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
         form = BlogForm(self.request.POST, self.request.FILES)
         context = self.get_context_data()
 
@@ -277,11 +296,16 @@ class WriteBlogView(BaseMixin, View):
             return HttpResponseRedirect(reverse('blog:writeblog'))
 
 
+# URL name = 'blog'
 class BlogView(BaseMixin, View):
     def get(self, *args, **kwargs):
         slug = self.kwargs.get('slug')
+
         if slug == 'view':
             return self.view()
+        else:
+            blog_id = self.kwargs.get('b_id')
+            return HttpResponseRedirect(reverse('blog:blog', kwargs={'b_id': blog_id, 'slug': 'view'}))
 
     def post(self, *args, **kwargs):
         slug = self.kwargs.get('slug')
@@ -289,11 +313,11 @@ class BlogView(BaseMixin, View):
         if slug == 'delete':
             return self.deleteblog()
         elif slug == 'like':
-            return self.like()
+            return self.like(self.request)
         elif slug == 'forward':
-            return self.forward()
+            return self.forward(self.request)
         elif slug == 'comment':
-            return self.comment()
+            return self.comment(self.request)
 
     def get_context_data(self, *args, **kwargs):
         context = super(BlogView, self).get_context_data(**kwargs)
@@ -329,7 +353,8 @@ class BlogView(BaseMixin, View):
 
         return render(self.request, 'blog/viewblog.html', context)
 
-    def forward(self):
+    @method_decorator(login_required)
+    def forward(self, request):
         context = self.get_context_data()
         blog = context['blog']
         log_user = context['log_user']
@@ -354,14 +379,15 @@ class BlogView(BaseMixin, View):
 
         return HttpResponseRedirect(reverse('blog:blog', kwargs={'b_id': blog.id, 'slug': 'view'}))
 
-    def like(self):
+    @method_decorator(login_required)
+    def like(self, request):
         context = self.get_context_data()
         blog = context['blog']
         log_user = context['log_user']
-        owner_id = log_user.id
+        log_user_id = log_user.id
 
-        if owner_id != blog.blog_author_id:
-            if blog.liked_user.filter(pk=owner_id).exists():
+        if log_user_id != blog.blog_author_id:
+            if blog.liked_user.filter(pk=log_user_id).exists():
                 blog.liked_user.remove(log_user)
                 context['liked'] = False
                 blog.popularity = F('popularity') - 1
@@ -389,7 +415,8 @@ class BlogView(BaseMixin, View):
 
         return HttpResponseRedirect(reverse('blog:user', kwargs={'u_id': log_user.id, 'slug': 'homepage'}))
 
-    def comment(self):
+    @method_decorator(login_required)
+    def comment(self, request):
         context = self.get_context_data()
         blog = context['blog']
         form = CommentForm(self.request.POST)
@@ -412,6 +439,7 @@ class BlogView(BaseMixin, View):
         return HttpResponseRedirect(reverse('blog:blog', kwargs={'b_id': blog.id, 'slug': 'view'}))
 
 
+# URL name = 'comment'
 class DeleteCommentView(BaseMixin, View):
     def get(self, request, *args):
         self.get_context_data()

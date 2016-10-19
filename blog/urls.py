@@ -2,12 +2,15 @@ from django.conf import settings
 from django.conf.urls import url
 from django.conf.urls.static import static
 from . import views
+from django.contrib.auth import views as auth_views
 from .views import IndexView, UserControlView, WriteBlogView, UserView, BlogView, DeleteCommentView
 
 app_name = 'blog'
 urlpatterns = [
 
     url(r'index', IndexView.as_view(), name='index'),
+
+    url(r'^auth/login/$', auth_views.login, {'template_name': 'blog/login.html'}),
 
     url(r'^user/(?P<slug>\w+)$', UserControlView.as_view(), name='usercontrol'),
 
