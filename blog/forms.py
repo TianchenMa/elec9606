@@ -14,16 +14,16 @@ MUSIC_TYPE = [
 
 
 class LoginForm(forms.Form):
-    username = forms.CharField(max_length=150)
-    password = forms.CharField(max_length=32, widget=forms.PasswordInput)
+    username = forms.CharField(max_length=150, required=True)
+    password = forms.CharField(max_length=32, widget=forms.PasswordInput, required=True)
 
 
 class RegisterForm(forms.Form):
-    username = forms.CharField(max_length=150)
-    firstname = forms.CharField(max_length=30)
-    lastname = forms.CharField(max_length=30)
-    email = forms.EmailField(max_length=254)
-    password = forms.CharField(max_length=32, widget=forms.PasswordInput)
+    username = forms.CharField(max_length=150, required=True)
+    firstname = forms.CharField(max_length=30, required=True)
+    lastname = forms.CharField(max_length=30, required=True)
+    email = forms.EmailField(max_length=254, required=True)
+    password = forms.CharField(max_length=32, widget=forms.PasswordInput, required=True)
 
 
 class ImageUploadForm(forms.Form):
@@ -55,9 +55,9 @@ class MusicUploadForm(forms.Form):
 
 
 class BlogForm(forms.Form):
-    title = forms.CharField(max_length=100)
-    content = forms.CharField(widget=forms.Textarea)
-    private = forms.ChoiceField(choices=IS_PRIVATE)
+    title = forms.CharField(max_length=100, required=True)
+    content = forms.CharField(widget=forms.Textarea, required=True)
+    private = forms.ChoiceField(choices=IS_PRIVATE, required=True)
     music = forms.FileField(required=False)
 
     def clean_file(self):
@@ -79,7 +79,7 @@ class BlogForm(forms.Form):
 
 class ForwardForm(forms.Form):
     fwdcontent = forms.CharField(max_length=100)
-    fwdprivate = forms.CharField()
+    fwdprivate = forms.CharField(required=False)
 
 
 class CommentForm(forms.Form):

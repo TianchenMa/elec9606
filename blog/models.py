@@ -92,6 +92,10 @@ class Blog(models.Model):
         null=True
     )
     fwd_viewed = models.BooleanField(default=False)
+    like_count = models.IntegerField(default=0)
+    forward_count = models.IntegerField(default=0)
+    comment_count = models.IntegerField(default=0)
+    view_count = models.IntegerField(default=0)
 
     class Meta:
         ordering = ['-blog_postdate']
