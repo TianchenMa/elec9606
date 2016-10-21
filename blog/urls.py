@@ -3,7 +3,8 @@ from django.conf.urls import url
 from django.conf.urls.static import static
 from . import views
 from django.contrib.auth import views as auth_views
-from .views import IndexView, UserControlView, WriteBlogView, UserView, BlogView, DeleteCommentView
+from .views import IndexView, UserControlView, WriteBlogView, UserView, BlogView, DeleteCommentView, NewsView, \
+    DetailNewsView
 
 app_name = 'blog'
 urlpatterns = [
@@ -13,6 +14,10 @@ urlpatterns = [
     url(r'^auth/login/$', auth_views.login, {'template_name': 'blog/login.html'}),
 
     url(r'^user/(?P<slug>\w+)$', UserControlView.as_view(), name='usercontrol'),
+
+    url(r'^news$', NewsView.as_view(), name='news'),
+
+    url(r'^news/(?P<slug>\w+)$', DetailNewsView.as_view(), name='detailnews'),
 
     url(r'^(?P<u_id>[0-9]+)/(?P<slug>\w+)$', UserView.as_view(), name='user'),
 
