@@ -1,0 +1,9 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+    <h3>News</h3>
+    <p>New followers: <a href="{% url 'blog:detailnews' 'follows' %}">{{ follow_news_count }}</a></p>
+    <p>New comments: <a href="{% url 'blog:detailnews' 'comments' %}">{{ comment_news_count }}</a></p>
+    <p>New likes: <a href="{% url 'blog:detailnews' 'likes' %}">{{ like_news_count }}</a></p>
+    <p>New forwards: <a href="{% url 'blog:detailnews' 'forwards' %}">{{ forward_news_count }}</a></p>
+{% endblock %}
