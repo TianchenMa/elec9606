@@ -44,11 +44,13 @@
         <ul><h3>Hot Blog</h3>
             {% for blog in popularity %}
                 {% if blog.fwd_blog %}
-                    <li>Forward: {{ blog.blog_title }}</li>
-                    <p>Title: <a href="{% url 'blog:blog' blog.id 'view' %}">
+                    <li>{{ forloop.counter }} - <a href="{% url 'blog:blog' blog.id 'view' %}">Forward: {{ blog.blog_title }}</a></li>
+                    <p>Title: <a href="{% url 'blog:blog' blog.fwd_blog.id 'view' %}">
                         {{ blog.fwd_blog.blog_title }}</a></p>
+                    <p>Popularity: {{ blog.popularity }}</p>
                 {% else %}
-                    <li>Title: <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.blog_title }}</a></li>
+                    <li>{{ forloop.counter }} - Title: <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.blog_title }}</a></li>
+                    <p>Popularity: {{ blog.popularity }}</p>
                 {% endif %}
             {% endfor %}
         </ul>

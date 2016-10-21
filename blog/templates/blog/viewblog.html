@@ -3,6 +3,7 @@
 {% block content %}
 
     <h2>{{ blog.blog_title }}</h2>
+    <p>Viewed {{ blog.view_count }} times</p>
 
     {% if self %}
         <form action="{% url 'blog:blog' blog.id 'delete' %}" method="post">
@@ -32,7 +33,7 @@
         Forward message: <input type="text" name="fwdcontent"/>
         Private: <input type="radio" name="fwdprivate" value=1>True</input>
         <input type="radio" name="fwdprivate" value=0>False</input><br>
-        <button type="submit">Forward</button>
+        <button type="submit">Forward ({{ blog.forward_count }})</button>
     </form>
     <br>
 
@@ -41,10 +42,11 @@
             <button type="submit">
                 {% csrf_token %}
                 {% if liked %}
-                    Unlike
+                    Liked
                 {% else %}
                     Like
                 {% endif %}
+                ({{ blog.like_count }})
             </button>
         </form>
         <br>
@@ -69,7 +71,7 @@
 
     {% block commentindex %}
 
-        <h3>Comments:</h3>
+        <h3>Comments ({{ blog.comment_count }}):</h3>
         <ul>
             {% for comment in comment_list %}
                 <li>{{ comment.comment_author.username }} - {{ comment.comment_date }} -
