@@ -10,21 +10,21 @@ class BlogAdmin(admin.ModelAdmin):
         'blog_title',
         'blog_postdate',
         'blog_content',
-        'blog_author',
+        'from_user',
     ]
 
-    list_display = ('blog_title', 'blog_author', 'blog_postdate')
+    list_display = ('blog_title', 'from_user', 'blog_postdate')
 
 
 class CommentAdmin(admin.ModelAdmin):
     fields = [
         'comment_content',
         'comment_date',
-        'comment_author_id',
+        'from_user_id',
         'comment_blog_id',
     ]
 
-    list_display = ('comment_blog', 'comment_author_id', 'comment_content', 'comment_date')
+    list_display = ('comment_blog', 'from_user_id', 'comment_content', 'comment_date')
 
 
 admin.site.register(User)
