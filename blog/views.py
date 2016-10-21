@@ -446,6 +446,9 @@ class BlogView(BaseMixin, View):
                 fwd_blog=blog,
                 relate_music=blog.relate_music
             )
+            if not fwdprivate:
+                fwdblog.fwd_viewed = True
+
             fwdblog.save()
             blog.popularity = F('popularity') + 1
             blog.blog_author.save()
