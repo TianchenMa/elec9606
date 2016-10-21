@@ -1,206 +1,63 @@
 {% extends "./base.html" %}
 
 {% block content %}
-                {% if blog.fwd_blog %}
+<div class="container">
 
- <div class="row clearfix cell2">
-        <div class="col-md-12 column" >
-            <nav class="navbar navbar-default" role="navigation">
+                <nav class="navbar navbar-default" role="navigation">
                 <div class="navbar-header">
                      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">Title:</a>
                 </div>
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav">
-                        <li class="active">
-                             <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.fwd_blog.blog_title }}</a>
+                        <li>
+                             <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.blog_title }}</a>
                         </li>
+                                              <li class="active col-md-3 pull-right">
+                                {% if self %}
+                            <form action="{% url 'blog:blog' blog.id 'delete' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-lg">Delete</button>
+                            </form>
+    {% endif %}
+                        </li> 
                     </ul>
                 </div>
                        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                    <ul class="nav navbar-nav">
-                        <li class="active">
-                        </li>
-                    </ul>
+  
                 </div>
 
             </nav>
-            <table class="table">
-                <thead>
-                                    <tr>
-                        <th>
-                            <p> Author: </p>
-                        </th>
-                        <th>
-                            <p>{{ blog.fwd_blog.blog_author.username }}</p>
-                        </th>
-                    </tr>
-                    <tr>
-                        <th>
-                            <p> Post date: </p>
-                        </th>
-                        <th>
-                            <p>{{ blog.fwd_blog.blog_postdate }}</p>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                        <p>Blog content:</p>    
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                        <p>{{ blog.fwd_blog.blog_content }}</p>
-                        </td>
-                            
-                    </tr>
-                                        <tr>
-                        <td>
-                        <p>Forward message:</p>    
-                        </td>
-                        <td>
-                        <p>{{ blog.blog_title }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                        <p>Forward date:</p>
-                        </td>
-                        <td>
-                        <p>{{ blog.blog_postdate }}<p>
-                        </td>                          
-                    </tr>
-                        <tr>
-                    <td>
-                      <form action="{% url 'blog:blog' blog.id 'forward' %}" method="post">
-        {% csrf_token %}
-        Forward message: <input type="text" name="fwdcontent"/>
-        Private: <input type="radio" name="fwdprivate" value=1>True</input>
-        <input type="radio" name="fwdprivate" value=0>False</input><br>
-        <button type="submit">Forward</button>
-    </form>
-                            </td>                          
-                    </tr>
-                    <tr>
-                    <td>
 
-    {% if request.user %}
-        <form action="{% url 'blog:likeblog' blog.id %}" method="post">
-            <button type="submit">
-                {% csrf_token %}
-                {% if liked %}
-                    Unlike
-                {% else %}
-                    Like
-                {% endif %}
-            </button>
-        </form>
+<div class="row clearfix">
+        <div class="col-md-9 column" >
+        <div class="cell3">
+           <table class="table">
+                        <tbody>
+    {% if not blog.fwd_blog %}<tr><td>
+        <h3>Author: {{ blog.blog_author.username }}</h3><br>
+        <h3>Publish date: {{ blog.blog_postdate }}</h3></td></tr><tr><td>
+        <h3>Content: <br></h3><p>{{ blog.blog_content }}</p></td></tr>
+    {% else %}<tr><td>
+        <h3>Forward comment:{{ blog.blog_title }}</h3><br>
+        <h3>Forward date: {{ blog.blog_postdate }}</h3><br>
+        <h3>{{ blog.fwd_blog.blog_author.username }}</h3><br>
+        <h3>Publish date: {{ blog.fwd_blog.blog_postdate }}</h3></td></tr><tr><td>
+        <h3>Content: <br><h3><p>{{ blog.fwd_blog.blog_content }}</p></td></tr>
     {% endif %}
 
-    <a href="{% url 'blog:user' blog.blog_author_id 'homepage' %}">Back</a>
-                            </td>                          
-                    </tr>
-        <h3>Comments:</h3>
-        <ul>
-            {% for comment in comment_list %}
-
-                <li>                            <tr>
-                    <td><p>{{ comment.comment_author.username }} - {{ comment.comment_date }} </p>
-                    </td>
-                    <td>
-
-                    {% if self %}
-        <form action="{% url 'blog:blog' blog.id 'delete' %}" method="post">
-            {% csrf_token %}
-            ---
-            <button type="submit">Delete</button>
-        </form>
-                    {% endif %}
-                    <td>
-                    </tr>
-                                        <tr>
-                    <td>
-                                    <P>{{ comment.comment_content }}</P>
-                    </td>
-                    </tr>
-                </li>
-            {% endfor %}
-        </ul>
-        {% if comment_error %}
-            <h3>{{ comment_error }}</h3>
-              </td>
-                    </tr>
-        {% endif %}
-        <tr>
-                    <td>
-        <form action="{% url 'blog:commentblog' blog.id %}" method="post">
-            {% csrf_token %}
-            <input type="hidden" name="author_id" value="{{ request.user.id }}"/>
-            <label>Comment:</label>
-            <input type="text" name="content"/>
-            <input type="submit" name="Submit"/>
-        </form>
-                    </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div><br>
-                {% else %}
-
- <div class="row clearfix cell3">
-        <div class="col-md-12 column" >
-            <nav class="navbar navbar-default" role="navigation">
-                <div class="navbar-header">
-                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">Title:</a>
-                </div>
-                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                    <ul class="nav navbar-nav">
-                        <li class="active">
-                             <a href="{% url 'blog:blog' blog.id 'view' %}">{{ blog.blog_title }}</a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>
-                            <a> Post date: </a>
-                        </th>
-                        <th>
-                            <a>{{ blog.blog_postdate }}</a>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                        <p>Blog content:</p>    
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                        <p>{{ blog.blog_content }}</p>
-                        </td>
-                            
-                    </tr>
-                    <tr>
-                    <td>
-                      <form action="{% url 'blog:blog' blog.id 'forward' %}" method="post">
+    {% if music %}<tr><td>
+        <audio src="/{{ music }}" controls="controls"></audio></td></tr>
+    {% endif %}
+<tr><td>
+    <form action="{% url 'blog:blog' blog.id 'forward' %}" method="post">
         {% csrf_token %}
-        Forward message: <input type="text" name="fwdcontent"/>
+        <h3>Forward message:</h3> <input type="text" name="fwdcontent"/><br>
         Private: <input type="radio" name="fwdprivate" value=1>True</input>
         <input type="radio" name="fwdprivate" value=0>False</input><br>
         <button type="submit">Forward</button>
-    </form>
-                            </td>                          
-                    </tr>
-                    <tr>
-                    <td>
+    </form></td></tr>
 
-    {% if request.user %}
+    {% if request.user %}<tr><td>
         <form action="{% url 'blog:blog' blog.id 'like' %}" method="post">
             <button type="submit">
                 {% csrf_token %}
@@ -211,59 +68,74 @@
                 {% endif %}
             </button>
         </form>
+        <br>
+        
     {% endif %}
+</td></tr>
 
-    <a href="{% url 'blog:user' blog.blog_author_id 'homepage' %}">Back</a>
-                            </td>                          
-                    </tr>
-        <h3>Comments:</h3>
-        <ul>
-            {% for comment in comment_list %}
+        <div class="cell3"><tr><td>
 
-                <li>                            <tr>
-                    <td><p>{{ comment.comment_author.username }} - {{ comment.comment_date }} </p>
-                    </td>
-                    <td>
+    {% block comment %}
 
-        <form action="{% url 'blog:blog' blog.id 'delete' %}" method="post">
-            {% csrf_token %}
-            ---
-            <button type="submit">Delete</button>
-        </form>
-                    <td>
-                    </tr>
-                                        <tr>
-                    <td>
-                                    <P>{{ comment.comment_content }}</P>
-                    </td>
-                    </tr>
-                </li>
-            {% endfor %}
-        </ul>
         {% if comment_error %}
             <h3>{{ comment_error }}</h3>
-              </td>
-                    </tr>
         {% endif %}
-        <tr>
-                    <td>
         <form action="{% url 'blog:blog' blog.id 'comment' %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="author_id" value="{{ request.user.id }}"/>
-            <label>Comment:</label>
+            <h3>Comment:</h3>
             <input type="text" name="content"/>
             <input type="submit" name="Submit"/>
         </form>
-                    </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div><br>
 
+    {% endblock %}</td></tr>
+<tr><td>
+    {% block commentindex %}
+
+        <h3>Comments:</h3>
+        <ul>
+            {% for comment in comment_list %}
+                <li>{{ comment.comment_author.username }} - {{ comment.comment_date }} -
+                    {% if self %}
+                        <form action="{% url 'blog:comment' comment.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit">Delete</button>
+                        </form>
+                    {% endif %}
+                </li>
+                <P>{{ comment.comment_content }}</P>
+            {% endfor %}
+        </ul>
+    {% endblock %}</td></tr><tr><td>
+    <a href="{% url 'blog:user' blog.blog_author_id 'homepage' %}">Back</a>
+    </div><br></td></tr>
+    </tbody></table>
+    </div>
+    </div>
+                            <div class="col-md-3 column">                                              
+                 <div class="cell3">
+                 <table>
+            <tbody>
+        <tr>
+        <td>
+
+    {% if popularity %}
+        <ul><h1>Hot Blog:</h1>
+            {% for blog in popularity %}
+                {% if blog.fwd_blog %}
+                    <li>Forward: {{ blog.blog_title }}</li>
+                    <p> <a href="{% url 'blog:blog' blog.id 'view' %}">
+                        Title:{{ blog.fwd_blog.blog_title }}</a></p>
+                {% else %}
+                    <li> <a href="{% url 'blog:blog' blog.id 'view' %}">Title:{{ blog.blog_title }}</a></li>
                 {% endif %}
-
-
-  
-
+            {% endfor %}
+        </ul>
+        <br>
+    {% endif %}
+  </td>
+  </tr>              </tbody> </table> </div>
+    </div>
+    </div>
+</div>
 {% endblock %}

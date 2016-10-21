@@ -3,50 +3,64 @@
 {% block content %}
 
     <div class="container">
+                                    <nav class="navbar navbar-default" role="navigation">
+                <div class="navbar-header">
+                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">Index</a>
+                </div>
+            </nav> 
 
                             <div class="row clearfix">
-    {% if log_user %}
 
-        <div class="col-md-4 column" >
-        <h1>Users:</h1>
-                    <div class="cell3">
-        <a href="{% url 'blog:user' user.id 'homepage' %}" > User name:{{ user.username }}</a><br><br>
-<table border="0" cellpadding="1" cellspacing="1" style="width: 500px;">
+
+        <div class="col-md-3 column" >
+            {% if log_user %}
+        
+<table>
   <tbody>
     <tr>
       <td>
+                          <div class="cell3">
+      <h1>Username:{{ user.username }}</h1>
       <p>Email:{{ user.email }}</p>
-      </td>
-      </tr>
-<tr>
-      <td>
       <p>Joined date:{{ user.date_joined }}</p>
+                        <p>User.id:{{ user.id }}</p>
+                        </div><br>
       </td>
     </tr>
-  </tbody>
-  <tr>
-  <td>
-                  <p>User.id:{{ user.id }}</p>
-  </td>
-  </tr>
-</table>     
-</div>
-<br>
-          </div> 
-    {% else %}
-                        <div class="col-md-4 column" >
-                         <h1>Users:</h1>
+    <tr><td>
+        {% else %}
             <div class="cell3">
+            <h1>Users:</h1>
         <h3>No user.</h3>
         </div>
-        </div>
+        </div><br>
     {% endif %}
-        <div class="col-md-4 column" >
+    {% if follow_list %}
+    <div class="cell3">
+    <h1>Following users:</h1>
+                        {% for user in follow_list %}
+                                        
+        <a href="{% url 'blog:user' user.id 'homepage' %}" > User name:{{ user.username }}</a><br><br>
+      <p>Email:{{ user.email }}</p>
+      <p>Joined date:{{ user.date_joined }}</p>
+                  <p>User.id:{{ user.id }}</p>                  
+              {% endfor %}</div>
+
+    {% else %}
+    <div class="cell3">
+        <h3>Not following any user yet.</h3></div>
+
+    {% endif %}
+    </td></tr>
+  </tbody>
+</table>     
+<br>
+          </div> 
+        <div class="col-md-6 column" >
         <table>
         <thead>
         <tr>
         <th>
-            <h1>Following blogs:</h1>
                </th>
                </tr>
                </thead>
@@ -56,6 +70,7 @@
             {% for blog in blog_list %}
             <div class="cell3"> 
                   <div class="hero-unit">
+                  <h1>Following blogs:</h1>
                   <a href="{% url 'blog:blog' blog.id 'view' %}">Title:{{ blog.blog_title }}</a><br><br>
                 <p>Post date: {{ blog.blog_postdate }}</p>
                 <p>Blog Content:<br> {{ blog.blog_content }}</p>
@@ -66,43 +81,36 @@
     {% else %}
      <tr>
         <td>
-                   <div class="cell3"> 
+                   <div class="cell3">
+                   <h1>Following blogs:</h1> 
         <h3>No blog to show.</h3>
         </td></tr>
-        </tbody>
     {% endif %}
         </div>
-            <div class="col-md-4 column">        <table> </table> 
+            <div class="col-md-6 column">        <table> </table> 
     </div>
-                <div class="col-md-4 column">        <table>
-        <thead>
-        <tr>
-        <th>
-                <h1>Following users:</h1>
-                 </th>
-               </tr>
-               </thead>
-    {% if follow_list %}
+                <div class="col-md-3 column">        <table>
             <tbody>
-                        {% for user in follow_list %}
         <tr>
         <td>
                                         <div class="cell3">
-        <a href="{% url 'blog:user' user.id 'homepage' %}" > User name:{{ user.username }}</a><br><br>
-      <p>Email:{{ user.email }}</p>
-      <p>Joined date:{{ user.date_joined }}</p>
-                  <p>User.id:{{ user.id }}</p>
+    {% if popularity %}
+        <ul><h1>Hot Blog:</h1>
+            {% for blog in popularity %}
+                {% if blog.fwd_blog %}
+                    <li>Forward: {{ blog.blog_title }}</li>
+                    <p> <a href="{% url 'blog:blog' blog.id 'view' %}">
+                        Title:{{ blog.fwd_blog.blog_title }}</a></p>
+                {% else %}
+                    <li> <a href="{% url 'blog:blog' blog.id 'view' %}">Title:{{ blog.blog_title }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+        <br>
+    {% endif %}
                   </div>
   </td>
-  </tr>              {% endfor %}
-
-    {% else %}<tr>
-    <td>
-    <div class="cell3">
-        <h3>Not following any user yet.</h3></div>
-        </td>
-        </tr>    </tbody>
-    {% endif %} </table> 
+  </tr>              </tbody> </table> 
     </div>
     </div>
     </div>

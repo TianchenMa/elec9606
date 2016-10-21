@@ -37,8 +37,9 @@
             {% if not blog.blog_private or self %}
                 {% if blog.fwd_blog %}
 
- <div class="row clearfix cell3">
-        <div class="col-md-12 column" >
+ <div class="row clearfix">
+        <div class="col-md-9 column" >
+        <div class="cell3">
             <nav class="navbar navbar-inverse" role="navigation">
                 <div class="navbar-header">
                      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">Title:</a>
@@ -113,12 +114,38 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
+        </div></div>
+                        <div class="col-md-3 column">                                              
+                 <div class="cell3">
+                 <table>
+            <tbody>
+        <tr>
+        <td>
+
+    {% if popularity %}
+        <ul><h1>Hot Blog:</h1>
+            {% for blog in popularity %}
+                {% if blog.fwd_blog %}
+                    <li>Forward: {{ blog.blog_title }}</li>
+                    <p> <a href="{% url 'blog:blog' blog.id 'view' %}">
+                        Title:{{ blog.fwd_blog.blog_title }}</a></p>
+                {% else %}
+                    <li> <a href="{% url 'blog:blog' blog.id 'view' %}">Title:{{ blog.blog_title }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+        <br>
+    {% endif %}
+  </td>
+  </tr>              </tbody> </table> </div>
+    </div>
+
     </div><br>
                 {% else %}
 
- <div class="row clearfix cell3">
-        <div class="col-md-12 column" >
+ <div class="row clearfix">
+        <div class="col-md-9 column" >
+        <div class="cell3">
                         <nav class="navbar navbar-inverse" role="navigation">
                 <div class="navbar-header">
                      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">Title:</a>
@@ -169,6 +196,31 @@
                 </tbody>
             </table>
         </div>
+        </div>
+                        <div class="col-md-3 column">                                              
+                 <div class="cell3">
+                 <table>
+            <tbody>
+        <tr>
+        <td>
+
+    {% if popularity %}
+        <ul><h1>Hot Blog:</h1>
+            {% for blog in popularity %}
+                {% if blog.fwd_blog %}
+                    <li>Forward: {{ blog.blog_title }}</li>
+                    <p> <a href="{% url 'blog:blog' blog.id 'view' %}">
+                        Title:{{ blog.fwd_blog.blog_title }}</a></p>
+                {% else %}
+                    <li> <a href="{% url 'blog:blog' blog.id 'view' %}">Title:{{ blog.blog_title }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+        <br>
+    {% endif %}
+  </td>
+  </tr>              </tbody> </table> </div>
+    </div>
     </div><br>
 
                 {% endif %}
