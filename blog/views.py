@@ -12,7 +12,7 @@ from django.views.generic.edit import ContextMixin
 from django.core.exceptions import PermissionDenied
 
 from .models import Blog, Comment, User, Music, Relationship, LikeRelationship
-from .forms import CommentForm, BlogForm, ForwardForm, LoginForm, RegisterForm, ImageUploadForm, MusicUploadForm
+from .forms import BlogForm, LoginForm, RegisterForm, ImageUploadForm, MusicUploadForm, CommentForm, ForwardForm
 
 
 # Create your views here.
@@ -423,6 +423,11 @@ class BlogView(BaseMixin, View):
 
     def view(self):
         context = self.get_context_data()
+        blog = context['blog']
+        blog.view_count = F('view_count') + 1
+        blog.save()
+        blog.refresh_from_db()
+        context['blog'] = blog
 
         return render(self.request, 'blog/viewblog.html', context)
 
@@ -451,6 +456,7 @@ class BlogView(BaseMixin, View):
 
             fwdblog.save()
             blog.popularity = F('popularity') + 1
+            blog.forward_count = F('forward_count') + 1
             blog.blog_author.save()
             blog.save()
 
@@ -467,6 +473,7 @@ class BlogView(BaseMixin, View):
             if blog.liked_user.filter(pk=log_user_id).exists():
                 LikeRelationship.objects.get(to_blog=blog, from_user=log_user).delete()
                 blog.popularity = F('popularity') - 1
+                blog.like_count = F('like_count') - 1
                 blog.save()
                 blog.blog_author.save()
             else:
@@ -474,6 +481,7 @@ class BlogView(BaseMixin, View):
                                                 from_user=log_user,
                                                 to_author=blog.blog_author.id).save()
                 blog.popularity = F('popularity') + 1
+                blog.like_count = F('like_count') + 1
                 blog.save()
                 blog.blog_author.save()
 
@@ -509,6 +517,7 @@ class BlogView(BaseMixin, View):
             try:
                 comment.save()
                 blog.popularity = F('popularity') + 1
+                blog.comment_count = F('comment_count') + 1
                 blog.blog_author.save()
                 blog.save()
             except Exception:
@@ -530,6 +539,7 @@ class DeleteCommentView(BaseMixin, View):
         if context['self']:
             Comment.objects.get(pk=c_id).delete()
             context['comment_list'] = blog.comment_set.all()
+            blog.comment_count = F('comment_count') - 1
 
         return HttpResponseRedirect(reverse('blog:blog', kwargs={'b_id': blog.id, 'slug': 'view'}))
 
