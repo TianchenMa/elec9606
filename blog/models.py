@@ -25,10 +25,6 @@ def music_directory_path(instance, filename):
 
 class User(AbstractUser):
     gender = models.CharField(max_length=1, default='0', choices=GENDER)
-    comment_news = models.IntegerField(default=0)
-    like_news = models.IntegerField(default=0)
-    follow_news = models.IntegerField(default=0)
-    forward_news = models.IntegerField(default=0)
     follow = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         through='Relationship',
@@ -78,7 +74,7 @@ class Blog(models.Model):
         settings.AUTH_USER_MODEL,
         through='LikeRelationship'
     )
-    from_user = models.ForeignKey(
+    blog_author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="blog_author"
@@ -100,8 +96,8 @@ class Blog(models.Model):
     class Meta:
         ordering = ['-blog_postdate']
 
-    def __str__(self):
-        return "Title: " + self.blog_title + "; Author: " + User.objects.get(pk=self.blog_author_id).__str__()
+    # def __str__(self):
+    #     return "Title: " + self.blog_title + "; Author: " + User.objects.get(pk=self.blog_author_id).__str__()
 
 
 class LikeRelationship(models.Model):
@@ -114,7 +110,7 @@ class LikeRelationship(models.Model):
 
 class Comment(models.Model):
     """docstring for Comment"""
-    from_user = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment_author = models.ForeignKey(User, on_delete=models.CASCADE)
     comment_blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
     comment_content = models.TextField(blank=True, null=False)
     comment_date = models.DateTimeField("Date commented.", auto_now_add=True)
@@ -123,8 +119,8 @@ class Comment(models.Model):
     class Meta:
         ordering = ['-comment_date']
 
-    def __str__(self):
-        return "User: " + User.objects.get(
-            pk=self.comment_author_id).user_name + "; " + "Comment on blog: " + Blog.objects.get(
-            pk=self.comment_blog_id).blog_title + "."
+    # def __str__(self):
+    #     return "User: " + User.objects.get(
+    #         pk=self.comment_author_id).user_name + "; " + "Comment on blog: " + Blog.objects.get(
+    #         pk=self.comment_blog_id).blog_title + "."
 
