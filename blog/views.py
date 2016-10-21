@@ -28,7 +28,6 @@ class BaseMixin(ContextMixin):
         if self.request.user.is_active:
             user = User.objects.get(pk=self.request.user.id)
             context['log_user'] = user
-            context['messages'] = user.follow_news + user.like_news + user.comment_news + user.forward_news
         else:
             context['log_user'] = None
 
@@ -51,7 +50,7 @@ class IndexView(BaseMixin, ListView):
             context['follow_list'] = user.follow.all()
 
             for user in user.follow.all():
-                blog = blog | Blog.objects.filter(from_user=user, blog_private=False)
+                blog = blog | Blog.objects.filter(blog_author=user, blog_private=False)
 
         context['blog_list'] = blog
         return context
@@ -69,8 +68,6 @@ class UserControlView(BaseMixin, View):
             return render(self.request, 'blog/register.html')
         elif slug == 'manage':
             return self.to_manage_page(self.request)
-        elif slug == 'messages':
-            return self.messages(self.request)
         raise PermissionDenied
 
     def post(self, *args, **kwargs):
@@ -149,7 +146,6 @@ class UserControlView(BaseMixin, View):
 
         if form.is_valid():
             if form.clean_file():
-                # log_user = User.objects.get(pk=self.request.user.id)
                 log_user = context['log_user']
                 log_user.profile_photo = form.cleaned_data['profile']
                 log_user.save()
@@ -161,20 +157,6 @@ class UserControlView(BaseMixin, View):
             return render(self.request, 'blog/upload_profile.html', context)
 
         return HttpResponseRedirect(reverse('blog:index'))
-
-    @method_decorator(login_required)
-    def messages(self, request):
-        context = self.get_context_data()
-        log_user = context['log_user']
-        context['like_news_count'] = LikeRelationship.objects.filter(to_author=log_user.id).count()
-        context['comment_news_count'] = Comment.objects.filter(comment_blog__from_user=log_user,
-                                                               viewed=False).count()
-        context['forward_news_count'] = Blog.objects.filter(fwd_blog_from_user=log_user,
-                                                            fwd_viewed=False).count()
-        context['follow_news_count'] = Relationship.objects.filter(to_user=log_user,
-                                                                   reviewed=False).count()
-
-        return render(self.request, 'blog/messages.html', context)
 
     def search(self):
         context = self.get_context_data()
@@ -195,13 +177,10 @@ class NewsView(BaseMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(NewsView, self).get_context_data()
         log_user = context['log_user']
-        context['like_news_count'] = LikeRelationship.objects.filter(to_author=log_user.id).count()
-        context['comment_news_count'] = Comment.objects.filter(comment_blog__from_user=log_user,
-                                                               viewed=False).count()
-        context['forward_news_count'] = Blog.objects.filter(fwd_blog__from_user=log_user,
-                                                            fwd_viewed=False).count()
-        context['follow_news_count'] = Relationship.objects.filter(to_user=log_user,
-                                                                   reviewed=False).count()
+        context['like_news_count'] = LikeRelationship.objects.filter(to_author=log_user.id, viewed=False).count()
+        context['comment_news_count'] = Comment.objects.filter(comment_blog__blog_author=log_user, viewed=False).count()
+        context['forward_news_count'] = Blog.objects.filter(fwd_blog__blog_author=log_user, fwd_viewed=False).count()
+        context['follow_news_count'] = Relationship.objects.filter(to_user=log_user,  reviewed=False).count()
 
         return context
 
@@ -223,21 +202,32 @@ class DetailNewsView(BaseMixin, TemplateView):
 
         if slug == 'likes':
             context['name'] = 'likes'
-            context['news'] = LikeRelationship.objects.filter(to_author=log_user.id)
+            news = LikeRelationship.objects.filter(to_author=log_user.id, viewed=False)
+            context['news'] = list(news)
+            news.update(viewed=True)
+            log_user.like_news = F('like_news') - len(context['news'])
         elif slug == 'comments':
             context['name'] = 'comments'
-            context['news'] = Comment.objects.filter(comment_blog__from_user=log_user,
-                                                     viewed=False)
+            news = Comment.objects.filter(comment_blog__blog_author_id=log_user.id, viewed=False)
+            context['news'] = list(news)
+            news.update(viewed=True)
+            log_user.comment_news = F('comment_news') - len(context['news'])
         elif slug == 'forwards':
             context['name'] = 'forward'
-            context['news'] = Blog.objects.filter(fwd_blog__from_user=log_user,
-                                                  fwd_viewed=False)
+            news = Blog.objects.filter(fwd_blog__blog_author=log_user, fwd_viewed=False)
+            context['news'] = list(news)
+            news.update(fwd_viewed=True)
+            log_user.forward_news = F('forward_news') - len(context['news'])
         elif slug == 'follows':
             context['name'] = 'follows'
-            context['news'] = Relationship.objects.filter(to_user=log_user,
-                                                          reviewed=False)
+            news = Relationship.objects.filter(to_user=log_user, reviewed=False)
+            context['news'] = list(news)
+            news.update(reviewed=True)
+            log_user.follow_news = F('follow_news') - len(context['news'])
         else:
             raise Http404
+
+        log_user.save()
 
         return context
 
@@ -275,7 +265,7 @@ class UserView(BaseMixin, View):
         log_user = context['log_user']
         home_id = self.kwargs.get('u_id')
         user = get_object_or_404(User, pk=home_id)
-        blog_list = Blog.objects.filter(from_user=user)
+        blog_list = Blog.objects.filter(blog_author=user)
 
         if type(log_user) is User:
             context['follow'] = user in log_user.follow.all()
@@ -319,12 +309,10 @@ class UserView(BaseMixin, View):
                 add_date=timezone.now()
             )
             relationship.save()
-            added_user.follow_news = F('follow_news') + 1
             added_user.save()
             context['follow'] = True
         else:
             Relationship.objects.filter(from_user=log_user, to_user=added_user).delete()
-            added_user.follow_news = F('follow_news') - 1
             added_user.save()
             context['follow'] = False
 
@@ -363,7 +351,7 @@ class WriteBlogView(BaseMixin, View):
                 post_date = timezone.now()
                 author = self.request.user.id
                 blog = Blog.objects.create(blog_title=title, blog_content=content, blog_postdate=post_date,
-                                           from_user_id=author, blog_private=private)
+                                           blog_author_id=author, blog_private=private)
                 blog.relate_music = m
                 try:
                     blog.save()
@@ -406,7 +394,7 @@ class BlogView(BaseMixin, View):
         log_user = context['log_user']
         b_id = self.kwargs.get('b_id')
         blog = Blog.objects.get(pk=b_id)
-        home_id = blog.from_user_id
+        home_id = blog.blog_author_id
         user = get_object_or_404(User, pk=home_id)
 
         if type(log_user) is User:
@@ -425,6 +413,9 @@ class BlogView(BaseMixin, View):
         context['User'] = user
         context['self'] = is_self
         context['comment_list'] = blog.comment_set.all()
+        if user == log_user:
+            context['comment_list'].update(viewed=True)
+
         if blog.relate_music is not None:
             context['music'] = blog.relate_music.music
 
@@ -448,17 +439,19 @@ class BlogView(BaseMixin, View):
             fwdprivate = form.cleaned_data['fwdprivate']
             fwddate = timezone.now()
             fwdblog = Blog(
-                from_user=log_user,
+                blog_author=log_user,
                 blog_title=fwdcontent,
                 blog_postdate=fwddate,
                 blog_private=fwdprivate,
                 fwd_blog=blog,
                 relate_music=blog.relate_music
             )
+            if not fwdprivate:
+                fwdblog.fwd_viewed = True
+
             fwdblog.save()
             blog.popularity = F('popularity') + 1
-            blog.from_user.forward_news = F('forward_news') + 1
-            blog.from_user.save()
+            blog.blog_author.save()
             blog.save()
 
         return HttpResponseRedirect(reverse('blog:blog', kwargs={'b_id': blog.id, 'slug': 'view'}))
@@ -470,35 +463,31 @@ class BlogView(BaseMixin, View):
         log_user = context['log_user']
         log_user_id = log_user.id
 
-        if log_user_id != blog.from_user_id:
+        if log_user_id != blog.blog_author_id:
             if blog.liked_user.filter(pk=log_user_id).exists():
                 LikeRelationship.objects.get(to_blog=blog, from_user=log_user).delete()
-                context['liked'] = False
                 blog.popularity = F('popularity') - 1
                 blog.save()
-                blog.from_user.like_news = F('like_news') - 1
-                blog.from_user.save()
+                blog.blog_author.save()
             else:
                 LikeRelationship.objects.create(to_blog=blog,
                                                 from_user=log_user,
-                                                to_author=blog.from_user.id).save()
-                context['liked'] = True
+                                                to_author=blog.blog_author.id).save()
                 blog.popularity = F('popularity') + 1
                 blog.save()
-                blog.from_user.like_news = F('like_news') + 1
-                blog.from_user.save()
+                blog.blog_author.save()
 
-        return render(self.request, 'blog/viewblog.html', context)
+        return HttpResponseRedirect(reverse('blog:blog', kwargs={'b_id': blog.id, 'slug': 'view'}))
 
     def deleteblog(self):
         context = self.get_context_data()
         blog = context['blog']
         log_user = context['log_user']
-        if blog.from_user_id == log_user.id:
+        if blog.blog_author_id == log_user.id:
             Blog.objects.get(pk=blog.id).delete()
             context['blog'] = None
             context['follow'] = False
-            context['Blog_list'] = Blog.objects.filter(from_user=log_user)
+            context['Blog_list'] = Blog.objects.filter(blog_author=log_user)
 
         context['comment_list'] = None
         context['music'] = None
@@ -512,16 +501,15 @@ class BlogView(BaseMixin, View):
         form = CommentForm(self.request.POST)
 
         if form.is_valid():
-            author_id = form.cleaned_data['from_user_id']
+            author_id = form.cleaned_data['comment_author_id']
             content = form.cleaned_data['content']
             date = timezone.now()
-            comment = Comment(from_user_id=author_id, comment_blog=blog, comment_content=content,
+            comment = Comment(comment_author_id=author_id, comment_blog=blog, comment_content=content,
                               comment_date=date)
             try:
                 comment.save()
                 blog.popularity = F('popularity') + 1
-                blog.from_user.comment_news = F('comment_news') + 1
-                blog.from_user.save()
+                blog.blog_author.save()
                 blog.save()
             except Exception:
                 raise Http404
@@ -552,7 +540,7 @@ class DeleteCommentView(BaseMixin, View):
         comment = Comment.objects.get(pk=c_id)
         b_id = comment.comment_blog.id
         blog = Blog.objects.get(pk=b_id)
-        home_id = blog.from_user_id
+        home_id = blog.blog_author_id
         user = get_object_or_404(User, pk=home_id)
 
         if home_id == log_user.id:

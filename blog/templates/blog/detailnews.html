@@ -3,10 +3,46 @@
 {% block content %}
 
     <h3>New {{ name }}</h3>
-    <ul>
-        {% for new in news %}
-            {{ new }}
-        {% endfor %}
-    </ul>
+    {% if news %}
+        <ul>
+            {% if name == 'likes' %}
+                {% for new in news %}
+                    <li><a href="{% url 'blog:user' new.from_user.id 'homepage' %}">{{ new.from_user.username }}</a>
+                        liked your blog <a
+                                href="{% url 'blog:blog' new.to_blog.id 'view' %}"><strong>{{ new.to_blog.blog_title }}</strong></a>
+                    </li>
+                    <p>Time: {{ new.date|date:'H : m, M d, Y' }}</p>
+                {% endfor %}
+            {% elif name == 'comments' %}
+                {% for new in news %}
+                    <li><a href="{% url 'blog:user' new.comment_author.id 'homepage' %}">{{ new.comment_author.username }}</a>
+                        comment
+                        your blog <a
+                                href="{% url 'blog:blog' new.comment_blog.id 'view' %}"><strong>{{ new.comment_blog.blog_title }}</strong></a>
+                    </li>
+                    <p>Comment: {{ new.comment_content }}</p>
+                    <p>Time: {{ new.comment_date|date:'H : m, M d, Y' }}</p>
+                {% endfor %}
+            {% elif name == 'forward' %}
+                {% for new in news %}
+                    <li><a href="{% url 'blog:user' new.blog_author.id 'homepage' %}">{{ new.blog_author.username }}</a>
+                        forwarded your blog <a
+                                href="{% url 'blog:blog' new.fwd_blog.id 'view' %}"><strong>{{ new.fwd_blog.blog_title }}</strong></a>
+                    </li>
+                    <p>Forward Comment: {{ new.blog_title }}</p>
+                    <p>Time: {{ new.blog_postdate|date:'H : m, M d, Y' }}</p>
+                {% endfor %}
+            {% elif name == 'follows' %}
+                {% for new in news %}
+                    <li><a href="{% url 'blog:user' new.from_user.id 'homepage' %}">{{ new.from_user.username }}</a>
+                        followed you.
+                    </li>
+                    <p>Time: {{ new.add_date|date:'H : m, M d, Y' }}</p>
+                {% endfor %}
+            {% endif %}
+        </ul>
+    {% else %}
+        <p>No news.</p>
+    {% endif %}
 
 {% endblock %}

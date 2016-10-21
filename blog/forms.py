@@ -8,7 +8,8 @@ IS_PRIVATE = [
 ]
 
 MUSIC_TYPE = [
-    'mp3'
+    'mp3',
+    'mpeg'
 ]
 
 
@@ -71,7 +72,7 @@ class BlogForm(forms.Form):
                 else:
                     return True
             else:
-                return False
+                    return False
         except AttributeError:
             return True
 
@@ -82,6 +83,6 @@ class ForwardForm(forms.Form):
 
 
 class CommentForm(forms.Form):
-    from_user_id = forms.CharField()
+    comment_author_id = forms.CharField()
     content = forms.CharField(widget=forms.Textarea)
 
