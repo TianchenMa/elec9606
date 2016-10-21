@@ -1,0 +1,12 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+
+    <h3>New {{ name }}</h3>
+    <ul>
+        {% for new in news %}
+            {{ new }}
+        {% endfor %}
+    </ul>
+
+{% endblock %}

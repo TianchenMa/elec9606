@@ -25,6 +25,7 @@
             </form>
             <a href="{% url 'blog:usercontrol' 'manage' %}">Manage</a>
             <a href="{% url 'blog:writeblog' %}">Write blog</a>
+            <p>News: <a href="{% url 'blog:news'%}">{{ messages }}</a></p>
         {% endif %}
 
     {% endblock %}

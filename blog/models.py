@@ -25,6 +25,10 @@ def music_directory_path(instance, filename):
 
 class User(AbstractUser):
     gender = models.CharField(max_length=1, default='0', choices=GENDER)
+    comment_news = models.IntegerField(default=0)
+    like_news = models.IntegerField(default=0)
+    follow_news = models.IntegerField(default=0)
+    forward_news = models.IntegerField(default=0)
     follow = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         through='Relationship',
@@ -72,18 +76,12 @@ class Blog(models.Model):
     popularity = models.IntegerField(default=0)
     liked_user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        related_name="liked_user"
+        through='LikeRelationship'
     )
-    blog_author = models.ForeignKey(
+    from_user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="blog_author"
-    )
-    fwd_blog = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        related_name="forward_blog",
-        null=True
     )
     relate_music = models.ForeignKey(
         Music,
@@ -91,6 +89,13 @@ class Blog(models.Model):
         null=True,
         blank=True
     )
+    fwd_blog = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        related_name="forward_blog",
+        null=True
+    )
+    fwd_viewed = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-blog_postdate']
@@ -99,12 +104,21 @@ class Blog(models.Model):
         return "Title: " + self.blog_title + "; Author: " + User.objects.get(pk=self.blog_author_id).__str__()
 
 
+class LikeRelationship(models.Model):
+    to_blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
+    to_author = models.IntegerField(default=0)
+    from_user = models.ForeignKey(User, on_delete=models.CASCADE)
+    viewed = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True)
+
+
 class Comment(models.Model):
     """docstring for Comment"""
-    comment_author = models.ForeignKey(User, on_delete=models.CASCADE)
+    from_user = models.ForeignKey(User, on_delete=models.CASCADE)
     comment_blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
     comment_content = models.TextField(blank=True, null=False)
     comment_date = models.DateTimeField("Date commented.", auto_now_add=True)
+    viewed = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-comment_date']

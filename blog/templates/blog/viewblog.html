@@ -50,7 +50,7 @@
         <br>
     {% endif %}
 
-    <a href="{% url 'blog:user' blog.blog_author_id 'homepage' %}">Back</a>
+    <a href="{% url 'blog:user' blog.from_user.id 'homepage' %}">Back</a>
 
     {% block comment %}
 
@@ -59,7 +59,7 @@
         {% endif %}
         <form action="{% url 'blog:blog' blog.id 'comment' %}" method="post">
             {% csrf_token %}
-            <input type="hidden" name="author_id" value="{{ request.user.id }}"/>
+            <input type="hidden" name="from_user_id" value="{{ request.user.id }}"/>
             <label>Comment:</label>
             <input type="text" name="content"/>
             <input type="submit" name="Submit"/>
@@ -72,7 +72,7 @@
         <h3>Comments:</h3>
         <ul>
             {% for comment in comment_list %}
-                <li>{{ comment.comment_author.username }} - {{ comment.comment_date }} -
+                <li>{{ comment.from_user.username }} - {{ comment.comment_date }} -
                     {% if self %}
                         <form action="{% url 'blog:comment' comment.id %}" method="post">
                             {% csrf_token %}
