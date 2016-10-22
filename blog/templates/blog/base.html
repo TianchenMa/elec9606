@@ -25,7 +25,9 @@
             </form>
             <a href="{% url 'blog:usercontrol' 'manage' %}">Manage</a>
             <a href="{% url 'blog:writeblog' %}">Write blog</a>
-            <p><a href="{% url 'blog:news'%}">News</a></p>
+            <a href="{% url 'blog:news'%}">News</a>
+            <p>Followers: <a href="{% url 'blog:usercontrol' 'follower' %}">{{ follower_count }}</a></p>
+            <p>Following: <a href="{% url 'blog:usercontrol' 'following' %}">{{ following_count }}</a></p>
         {% endif %}
 
     {% endblock %}

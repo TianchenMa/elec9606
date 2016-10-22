@@ -1,0 +1,38 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+
+    <h3>{{ type }}</h3>
+    {% if relationships %}
+        <ul>
+            {% if type == 'Following' %}
+                {% for user in relationships %}
+                    <li><a href="{% url 'blog:user' user.id 'homepage' %}">{{ user.username }}</a></li>
+                    <form action="{% url 'blog:user' user.id 'follow' %}" method="post">
+                        <input type="hidden" name="next_page" value="following"/>
+                        {% csrf_token %}
+                        <button type="submit">Unfollow</button>
+                    </form>
+                {% endfor %}
+            {% else %}
+                {% for follow in relationships %}
+                    <li>
+                        <a href="{% url 'blog:user' follow.from_user.id 'homepage' %}">{{ follow.from_user.username }}</a>
+                        {% if follow.from_user in log_user.follow.all %}
+                            <p>Followed</p>
+                        {% else %}
+                            <form action="{% url 'blog:user' follow.from_user.id 'follow' %}" method="post">
+                                <input type="hidden" name="next_page" value="follower"/>
+                                {% csrf_token %}
+                                <button type="submit">Follow</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            {% endif %}
+        </ul>
+    {% else %}
+        <p>Empty</p>
+    {% endif %}
+
+{% endblock %}

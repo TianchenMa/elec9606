@@ -26,8 +26,10 @@ class BaseMixin(ContextMixin):
         context = super(BaseMixin, self).get_context_data(**kwargs)
 
         if self.request.user.is_active:
-            user = User.objects.get(pk=self.request.user.id)
-            context['log_user'] = user
+            log_user = User.objects.get(pk=self.request.user.id)
+            context['log_user'] = log_user
+            context['following_count'] = Relationship.objects.filter(from_user=log_user).count()
+            context['follower_count'] = Relationship.objects.filter(to_user=log_user).count()
         else:
             context['log_user'] = None
 
@@ -68,6 +70,10 @@ class UserControlView(BaseMixin, View):
             return render(self.request, 'blog/register.html')
         elif slug == 'manage':
             return self.to_manage_page(self.request)
+        elif slug == 'following':
+            return self.following_detail(self.request)
+        elif slug == 'follower':
+            return self.follower_detail(self.request)
         raise PermissionDenied
 
     def post(self, *args, **kwargs):
@@ -157,6 +163,24 @@ class UserControlView(BaseMixin, View):
             return render(self.request, 'blog/upload_profile.html', context)
 
         return HttpResponseRedirect(reverse('blog:index'))
+
+    @method_decorator(login_required)
+    def following_detail(self, request):
+        context = self.get_context_data()
+        log_user = context['log_user']
+        context['type'] = 'Following'
+        context['relationships'] = log_user.follow.all()
+
+        return render(self.request, 'blog/relationship.html', context)
+
+    @method_decorator(login_required)
+    def follower_detail(self, request):
+        context = self.get_context_data()
+        log_user = context['log_user']
+        context['type'] = 'Follower'
+        context['relationships'] = Relationship.objects.select_related('from_user').filter(to_user=log_user)
+
+        return render(self.request, 'blog/relationship.html', context)
 
     def search(self):
         context = self.get_context_data()
@@ -316,10 +340,23 @@ class UserView(BaseMixin, View):
             added_user.save()
             context['follow'] = False
 
+        try:
+            next_page = self.request.POST['next_page']
+        except KeyError:
+            pass
+        else:
+            if next_page == 'following':
+                return HttpResponseRedirect(reverse('blog:usercontrol', kwargs={'slug': 'following'}))
+            elif next_page == 'follower':
+                return HttpResponseRedirect(reverse('blog:usercontrol', kwargs={'slug': 'follower'}))
+            else:
+                raise Http404
+
         return HttpResponseRedirect(
-            reverse('blog:user', kwargs={'u_id': added_user.id, 'slug': 'homepage'}))  # URL name = 'writeblog'
+            reverse('blog:user', kwargs={'u_id': added_user.id, 'slug': 'homepage'}))
 
 
+# URL name = writeblog
 class WriteBlogView(BaseMixin, View):
     def get_context_data(self, **kwargs):
         context = super(WriteBlogView, self).get_context_data(**kwargs)
