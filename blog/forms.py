@@ -1,5 +1,5 @@
 from django import forms
-from elec9606.settings import MAX_IMAGE_SIZE, MAX_MUSIC_SIZE
+from newp.settings import MAX_IMAGE_SIZE, MAX_MUSIC_SIZE
 
 
 IS_PRIVATE = [

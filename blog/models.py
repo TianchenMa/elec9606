@@ -5,10 +5,10 @@ from django.contrib.auth.models import User, AbstractUser
 from django.utils import timezone
 
 
-GENDER = {
-    0: u'Male',
-    1: u'Female'
-}
+GENDER = (
+    ('0', u'Male'),
+    ('1', u'Female')
+)
 
 
 DEFAULT_PROFILE_PHOTO = 'static/blog/profile/default.jpg'
@@ -24,8 +24,12 @@ def music_directory_path(instance, filename):
 
 
 class User(AbstractUser):
-    gender = models.IntegerField(default=0, choices=GENDER.items())
-    follow = models.ManyToManyField(settings.AUTH_USER_MODEL)
+    gender = models.CharField(max_length=1, default='0', choices=GENDER)
+    follow = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through='Relationship',
+        through_fields=('from_user', 'to_user')
+    )
     profile_photo = models.ImageField(
         upload_to=user_directory_path,
         default=DEFAULT_PROFILE_PHOTO,
@@ -34,6 +38,21 @@ class User(AbstractUser):
 
     class Meta:
         ordering = ['date_joined']
+
+
+class Relationship(models.Model):
+    from_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='from_user'
+    )
+    to_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='to_user'
+    )
+    reviewed = models.BooleanField(default=False)
+    add_date = models.DateTimeField('Date added.')
 
 
 class Music(models.Model):
@@ -50,6 +69,7 @@ class Blog(models.Model):
     blog_content = models.TextField(blank=True, null=True)
     blog_postdate = models.DateTimeField("Date posted")
     blog_private = models.BooleanField(default=False)
+    popularity = models.IntegerField(default=0)
     liked_user = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="liked_user"
