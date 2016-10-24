@@ -1,40 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-{% if form.errors %}
-    <p>Your username and password didn't match. Please try again.</p>
-{% endif %}
-
-{% if next %}
-    {% if user.is_authenticated %}
-        <p>Your account doesn't have access to this page. To proceed,
-            please login with an account that has access.</p>
-    {% else %}
-        <p>Please login to see this page.</p>
+{% block login %}
+    {% if error_message %}
+        <h3>{{ error_message }}</h3>
     {% endif %}
-{% endif %}
 
-<form method="post" action="{% url 'blog:usercontrol' 'login' %}" method="post">
-    {% csrf_token %}
-    <table>
-        <tr>
-            <td>{{ form.username.label_tag }}</td>
-            <td>{{ form.username }}</td>
-        </tr>
-        <tr>
-            <td>{{ form.password.label_tag }}</td>
-            <td>{{ form.password }}</td>
-        </tr>
-    </table>
+    <form action="{% url 'blog:login' %}" method="post">
+        {% csrf_token %}
+        User name: <input type="text" name="name">
+        Password: <input type="password" name="password">
+        <input type="submit" value="Login">
+    </form>
 
-    <input type="submit" value="login"/>
-    <input type="hidden" name="next" value="{{ next }}"/>
-</form>
+    {% if not request.user.id %}
+        <a href="{% url 'blog:login' %}">Login</a><br>
+        <a href="{% url 'blog:register' %}">Regist</a>
+    {% else %}
+        <h6>{{ request.user.username }}<a href="{% url 'blog:logoutpage' %}"> Logout</a></h6>
+    {% endif %}
 
-</body>
-</html>
+{% endblock %}
