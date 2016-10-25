@@ -1,5 +1,7 @@
 {% extends "./base.html" %}
 
+{% block title %}View Blog{% endblock %}
+
 {% block content %}
 <div class="container">
 
@@ -115,7 +117,7 @@
     {% endif %}
 
     {% if music %}<tr><td>
-        <audio src="/{{ music }}" controls="controls"></audio></td></tr>
+        <h3>Music:</h3><audio src="/{{ music }}" controls="controls"></audio></td></tr>
     {% endif %}
 <tr><td>
     <form action="{% url 'blog:blog' blog.id 'forward' %}" method="post">
@@ -123,44 +125,65 @@
         <h3>Forward message:</h3> <input type="text" name="fwdcontent"/><br>
         Private: <input type="radio" name="fwdprivate" value=1>True</input>
         <input type="radio" name="fwdprivate" value=0>False</input><br>
-        <button type="submit">Forward</button>
+        <button type="submit" class="btn btn-default">Forward</button>
     </form></td></tr>
         
 
 
         <div class="cell3"><tr><td>
 
-    {% block comment %}
+{% block comment %}
 
         {% if comment_error %}
             <h3>{{ comment_error }}</h3>
         {% endif %}
         <form action="{% url 'blog:blog' blog.id 'comment' %}" method="post">
             {% csrf_token %}
-            <input type="hidden" name="author_id" value="{{ request.user.id }}"/>
+            <input type="hidden" name="comment_author_id" value="{{ request.user.id }}"/>
             <h3>Comment:</h3>
             <input type="text" name="content"/>
             <input type="submit" name="Submit"/>
         </form>
 
-    {% endblock %}</td></tr>
-<tr><td>
+    {% endblock %}</td></tr><tr><td>
+
     {% block commentindex %}
 
-        <h3>Comments:</h3>
-        <ul>
-            {% for comment in comment_list %}
-                <li>{{ comment.comment_author.username }} - {{ comment.comment_date }} -
-                    {% if self %}
+        <h3>Comments ({{ blog.comment_count }}):</h3>
+
+        {% for comment in comment_list %}
+
+        <nav class="navbar navbar-inverse" role="navigation">
+                <div class="navbar-header">
+                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">Author:</a>
+                </div>
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav">
+                        <li class="active">
+                             <a href="{% url 'blog:blog' blog.id 'view' %}">{{ comment.comment_author.username }}</a>
+                        </li>
+                                              <li class="active">
+ {% if self %}
                         <form action="{% url 'blog:comment' comment.id %}" method="post">
                             {% csrf_token %}
-                            <button type="submit">Delete</button>
+                            <button type="submit" class="btn btn-primary btn-lg">Delete</button>
                         </form>
                     {% endif %}
-                </li>
+
+                        </li> 
+                        <li class ="pull-right"><a>{{ comment.comment_date }}</a></li>
+                    </ul>
+                </div>
+                       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+  
+                </div>
+
+            </nav>
+                    
+                
                 <P>{{ comment.comment_content }}</P>
             {% endfor %}
-        </ul>
+        
     {% endblock %}</td></tr><tr><td>
     <a href="{% url 'blog:user' blog.blog_author_id 'homepage' %}">Back</a>
     </div><br></td></tr>

@@ -1,5 +1,7 @@
 {% extends "./base.html" %}
 
+{% block title %}Index{% endblock %}
+
 {% block content %}
 
     <div class="container">
@@ -124,7 +126,7 @@
                 </div>
 
             </nav>
-                <p>Blog Content:<br> {{ blog.blog_content }}</p>
+                <p> {{ blog.blog_content }}</p>
       
     </td></tr>{% endfor %}</tbody></table> 
             </td></tr></tbody>
